@@ -56,9 +56,7 @@ const game = new GameState();
 console.log(game.deck);
 
 // Serving HTML
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'home.html'));
-})
+app.use(express.static('public'));
 
 // Socket.io Logic
 io.on("connection", (socket) => {
