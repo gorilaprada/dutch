@@ -1,7 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import path from 'path';
 
 const app = express();
 const httpServer = createServer(app);
@@ -9,24 +8,31 @@ const io = new Server(httpServer)
 
 const PORT = process.env.PORT || 3000;
 const SERVER_URL = process.env.SERVER_URL;
-const __dirname = import.meta.dirname;
 
 
 // Game State
 class GameState {
   constructor() {
     this.deck = [];
-    this.players = {};
+    this.players = {
       // Keys should be socket.id
-      // player1: {
-      //   name: 'Luke'
-      //   hand: ['queenofhearts', 'card2', 'card3', 'card4']
-      // }
+      player1: {
+        name: 'Cranium',
+        hand: []
+      },
+      player2: {
+        name: 'Jo',
+        hand: []
+      }
+    };
     this.discardPile = [];
     this.state = "waiting";
 
     this.buildDeck()
     this.shuffleDeck()
+    console.log(this.deck.length)
+    this.distributeCards()
+    console.log(this.deck.length)
   }
 
   // Game helpers
@@ -35,10 +41,10 @@ class GameState {
     for (const suit of SUITS) {
       for (let value = 1; value < 14; value++) {
         this.deck.push({
-        id: `${suit}_${value}`,
-        suit: suit,
-        value: value,
-        isFaceUp: false
+          id: `${suit}_${value}`,
+          suit: suit,
+          value: value,
+          isFaceUp: false
         });
       }
     }
@@ -50,17 +56,29 @@ class GameState {
       [this.deck[card], this.deck[j]] = [this.deck[j], this.deck[card]];
     }
   }
+
+  distributeCards() {
+    const playerKeys = Object.keys(this.players)
+    playerKeys.forEach(value => {
+      this.players[value].hand = this.deck.splice(0, 4)
+    })
+  }
+
+  // startGame() {
+  //   for (const player of this.players) {
+  //
+  //   }
+  // }
 };
 
 const game = new GameState();
-console.log(game.deck);
 
 // Serving HTML
 app.use(express.static('public'));
 
 // Socket.io Logic
-io.on("connection", (socket) => {
-  console.log("Someone is connected")
+io.on("connect", (socket) => {
+  console.log(socket.id)
 })
 
 // Listening
