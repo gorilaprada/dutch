@@ -2,6 +2,7 @@ const socket = io();
 
 const joinBtn = document.getElementById('joinBtn');
 const nameInput = document.getElementById('name');
+const playersList = document.getElementById('playersList')
 
 joinBtn.addEventListener('click', () => {
   const name = nameInput.value.trim();
@@ -16,8 +17,22 @@ joinBtn.addEventListener('click', () => {
   }
 });
 
-socket.on('playerJoined', (message) => {
-  console.log(message);
+socket.on('updatePlayersList', (players) => {
+
+  playersList.innerHTML = ""
+
+  players.forEach(player => {
+    const li = document.createElement("li")
+
+    li.textContent = player.name
+
+    playersList.appendChild(li);
+  })
+
+  if (players.length >= 2 && players[0].id === socket.id) {
+    document.getElementById("startBtn").style.display = "block";
+  }
+
 })
 
 socket.on('error', (message) => {

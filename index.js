@@ -32,7 +32,8 @@ io.on('connection', (socket) => {
     if (player.error) {
       socket.emit('error', player.error);
     } else {
-      io.emit('playerJoined', `${player.name} joined the game!`);
+      const playersList = Array.from(game.players.values());
+      io.emit('updatePlayersList', playersList);
     }
   })
 })
