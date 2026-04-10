@@ -2,3 +2,6 @@ node_modules
 .env
 test-logic.js
 test*
+suggestions.md
+DAY_1.md
+START_HERE.md
