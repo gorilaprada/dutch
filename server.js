@@ -86,5 +86,15 @@ io.on("connection", (socket) => {
     }
   });
 
-})
+  socket.on("switchCards", (data) => {
+    const result = game.switchCards(socket.id, data.handIndex);
+    if (!result.success) {
+      socket.emit("error", result.error);
+    } else {
+      io.emit("gameStateUpdate", {
+        data: "This is a mock up of a gameState update sent to the front end"
+      });
+    }
+  });
+});
 
