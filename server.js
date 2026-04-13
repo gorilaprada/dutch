@@ -73,8 +73,18 @@ io.on("connection", (socket) => {
       game.startGame();
       io.emit("gameStarted", { success: true });
     }
-  })
+  });
 
+  socket.on("drawCard", (data) => {
+    const result = game.drawFrom(socket.id, data.drawFrom);
+    if (result.error) {
+      socket.emit("error", result.error);
+    } else {
+      io.emit("gameStateUpdate", {
+        data: "This is a mock up of a gameState update sent to the front end"
+      });
+    }
+  });
 
 })
 
