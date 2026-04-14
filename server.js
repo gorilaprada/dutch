@@ -20,9 +20,30 @@ httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`access server at ${SERVER_URL}:${PORT}`)
 })
 
-// Game control
 const game = new GameState();
-console.log(game.deck.deck.length);
+
+// Helper functions
+function getScrubbedState(game) {
+  return {
+    discardTop: game.discardPile[game.discardPile.length - 1] || null,
+    playerOrder: game.playerOrder,
+    activePlayer: game.playerOrder[game.turnIndex],
+    players: game.playerOrder.map(id => {
+      const player = game.players.get(id);
+      return {
+        id: player.id,
+        name: player.name,
+        hand: player.hand.map(card => ({
+          id: card.isFaceUp ? card.id : null,
+          suit: card.isFaceUp ? card.suit : null,
+          value: card.isFaceUp ? card.value : null,
+          isFaceUp: card.isFaceUp,
+        }))
+      }
+    })
+  }
+}
+
 
 // Socket.io Logic
 io.on("connection", (socket) => {
@@ -71,7 +92,7 @@ io.on("connection", (socket) => {
   socket.on("startGame", () => {
     if (!game.playerOrder.length) {
       game.startGame();
-      io.emit("gameStarted", { success: true });
+      io.emit("gameUpdated", { success: true, data: getScrubbedState(game), error: null });
     }
   });
 
@@ -81,7 +102,7 @@ io.on("connection", (socket) => {
       socket.emit("error", result.error);
     } else {
       io.emit("gameStateUpdate", {
-        data: "This is a mock up of a gameState update sent to the front end"
+        data: "Player drew card! This is a mock up of a gameState update sent to the front end"
       });
     }
   });
@@ -92,7 +113,7 @@ io.on("connection", (socket) => {
       socket.emit("error", result.error);
     } else {
       io.emit("gameStateUpdate", {
-        data: "This is a mock up of a gameState update sent to the front end"
+        data: "Card switched! This is a mock up of a gameState update sent to the front end"
       });
     }
   });

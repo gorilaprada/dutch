@@ -4,23 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dutch Game Dev</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <h1>Dutch Game!!</h1>
+    <header>
+      <h1>Dutch Game!!</h1>
+    </header>
 
     <div id="lobby">
+      <div>
       <input type="text" id="name" placeholder="Enter Name">
       <button id="joinBtn">Join Game</button>
+      </div>
+      <div>
+        <ul id="playersList"></ul>
+        <button id="startBtn" style="display: none;">Start Game</button>
+      </div>
     </div>
 
-    <div id="lobby">
-      <ul id="playersList"></ul>
-      <button id="startBtn" style="display: none;">Start Game</button>
-      
-    </div>
+
+    <main>
+      <div class="game-table">
+        <div class="player-area top">
+          <div id="hand-top" class="card-grid"></div>
+        </div>
+
+        <div class="player-area left">
+          <div id="hand-left" class="card-grid"></div>
+        </div>
+
+        <div class="center-area">
+          <div id="deck" class="card deck">Deck</div>
+          <div id="discardPile" class="card discardPile">Discard Pile</div>
+        </div>
+
+        <div class="player-area right">
+          <div id="hand-right" class="card-grid"></div>
+        </div>
+
+        <div class="player-area bottom">
+          <div id="hand-bottom" class="card-grid"></div>
+        </div>
+      </div>
+    </main>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="game.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
 
