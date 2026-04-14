@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #ffb5a1;
+  --color-primary-container: #ff5626;
+  --color-secondary: #a7c8ff;
+  --color-secondary-container: #134E8E;
+  --color-surface: #200e0e;
+  --color-surface-container: #2e1a1a;
+  --color-on-surface: #fedad8;
+  --color-outline: #ad887e;
+  
+  --radius-default: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-full: 0px;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background-color: #200e0e;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.02));
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.glow-text {
+  text-shadow: 0 0 8px rgba(255, 181, 161, 0.6);
+}
+
+.blue-glow {
+  box-shadow: 0 0 20px rgba(19, 78, 142, 0.4);
+}
+
+.card {
+  width: 80px;
+  height: 110px;
+  border: 2px solid #ffb5a1;
+  background: #2a1616;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.game-table {
+  display: grid;
+  grid-template-areas: 
+  ". top ."
+  "left center right"
+  ". bottom .";
+  grid-template-columns: 200px 1fr 200px;
+  grid-template-rows: 150px 1fr 200px;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  gap: 1rem;
+  padding: 1rem;
+}
+.player-area.top { grid-area: top; }
+.player-area.left { grid-area: left; display: flex; align-items: center; }
+.player-area.right { grid-area: right; display: flex; align-items: center; }
+.player-area.bottom { grid-area: bottom; }
+.center-area { grid-area: center; }
+
+.card-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
