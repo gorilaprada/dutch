@@ -21,7 +21,7 @@ function renderCard(card, cardIndex, targetGridId) {
   return `<div class="${cardClass}" id="${targetGridId}-${cardIndex}">${content}</div>`
 };
 
-// Lobby
+// Emitters
 joinBtn.addEventListener("click", () => {
   const name = nameInput.value.trim();
 
@@ -35,12 +35,19 @@ joinBtn.addEventListener("click", () => {
   }
 });
 
-// Game
-// Starting
 startBtn.addEventListener("click", () => {
   socket.emit("startGame")
 })
 
+deck.addEventListener("click", () => {
+  socket.emit("drawCard", { drawFrom: "deck" });
+});
+
+discardPile.addEventListener("click", () => {
+  socket.emit("drawCard", { drawFrom: "discardPile" });
+});
+
+// Rendering logic
 socket.on("gameUpdated", (response) => {
   if (response.success) {
     const data = response.data;
@@ -64,13 +71,6 @@ socket.on("gameUpdated", (response) => {
   }
 });
 
-
-// Drawing
-
-
-
-
-// Events automatically handled
 socket.on("updatePlayersList", (players) => {
   playersList.innerHTML = ""
 

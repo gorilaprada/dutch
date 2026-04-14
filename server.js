@@ -44,6 +44,18 @@ function getScrubbedState(game) {
   }
 }
 
+function emitUpdate() {
+  io.emit("gameUpdated", { success: true, data: getScrubbedState(game), error: null });
+};
+
+function discardCard() {
+  const result = game.discardCard(socket.id);
+  if (!result.success) {
+    socket.emit("error", result.error);
+  } else {
+    emitUpdate();
+  }
+}
 
 // Socket.io Logic
 io.on("connection", (socket) => {
@@ -92,7 +104,7 @@ io.on("connection", (socket) => {
   socket.on("startGame", () => {
     if (!game.playerOrder.length) {
       game.startGame();
-      io.emit("gameUpdated", { success: true, data: getScrubbedState(game), error: null });
+      emitUpdate();
     }
   });
 
@@ -101,9 +113,15 @@ io.on("connection", (socket) => {
     if (result.error) {
       socket.emit("error", result.error);
     } else {
-      io.emit("gameStateUpdate", {
-        data: "Player drew card! This is a mock up of a gameState update sent to the front end"
-      });
+      emitUpdate();
+    }
+  });
+
+  socket.on("discardCard", () => {
+    try {
+      discardCard();
+    } catch (error) {
+      console.error("Error at discardCard", error);
     }
   });
 
@@ -112,9 +130,7 @@ io.on("connection", (socket) => {
     if (!result.success) {
       socket.emit("error", result.error);
     } else {
-      io.emit("gameStateUpdate", {
-        data: "Card switched! This is a mock up of a gameState update sent to the front end"
-      });
+      emitUpdate();
     }
   });
 });
