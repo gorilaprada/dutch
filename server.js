@@ -64,6 +64,7 @@ io.on("connection", (socket) => {
       socket.emit("error", "Invalid name");
       return;
     }
+
     const player = game.addPlayer(socket.id, data.name)
 
     if (player.error) {

@@ -18,7 +18,7 @@ function renderCard(card, cardIndex, targetGridId) {
   const content = card.isFaceUp ? `${card.id}` : "Facedown";
   const cardClass = card.isFaceUp ? "card face-up" : "card face-down";
 
-  return `<div class="${cardClass}" id="${targetGridId}-${cardIndex}">${content}</div>`
+  return `<div class="card ${cardClass} border-primary text-primary glow-text" id="${targetGridId}-${cardIndex}">${content}</div>`
 };
 
 // Emitters
