@@ -75,17 +75,21 @@ socket.on("updatePlayersList", (players) => {
   playersList.innerHTML = ""
 
   players.forEach(player => {
-    const li = document.createElement("li")
+    const playerName = player.name;
+    const playerId = player.id;
 
-    li.textContent = player.name
-
-    playersList.appendChild(li);
+    const playerMarkup = `
+      <li class="flex items-center gap-3 p-3 bg-surface-container/50 border-l-4 border-secondary" style="">
+        <span class="material-symbols-outlined text-sm text-secondary" style="">radio_button_checked</span>
+        <span class="text-xs font-bold uppercase tracking-wider" style="">${playerName}</span>
+        <span class="ml-auto text-[8px] bg-secondary/20 text-secondary px-1 font-black" style="">${playerId}</span>
+      </li>
+      `
+    playersList.insertAdjacentHTML("beforeend", playerMarkup);
   })
 
-  if (players.length >= 2 && players[0].id === socket.id) {
-    document.getElementById("startBtn").style.display = "block";
-  }
-
+  const isHost = players.length >= 2 && players[0].id === socket.id
+  document.getElementById("startBtn").style.display = isHost ? "block" : "none";
 })
 
 socket.on("error", (message) => {

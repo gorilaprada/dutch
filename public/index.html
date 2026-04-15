@@ -17,12 +17,12 @@
           <span class="text-[#ffb5a1] border-b-2 border-[#ffb5a1]" style="">SESSION:ACTIVE</span>
           <span class="" style=""><br></span>
         </nav>
-        <div class="bg-tertiary-container px-4 py-2 border-l-4 border-tertiary flex items-center gap-3">
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="bg-tertiary-container px-4 py-2 border-l-20 border-tertiary flex items-center gap-3">
           <span class="text-on-tertiary-container font-black uppercase text-xs tracking-widest" style="">CURRENT TURN:</span>
           <span class="text-on-tertiary-container font-bold uppercase" style="">ADM_USER_01</span>
         </div>
-      </div>
-      <div class="flex items-center gap-4">
         <button class="p-2 text-[#ffb5a1] hover:bg-[#3a2424] transition-none" style=""><span class="material-symbols-outlined" style="">settings</span></button>
         <button class="p-2 text-[#ffb5a1] hover:bg-[#3a2424] transition-none" style=""><span class="material-symbols-outlined" style="">terminal</span></button>
       </div>
@@ -35,7 +35,7 @@
           <div class="text-[10px] font-black text-[#ff5626] mb-4 tracking-[0.2em]" style="">CONNECTION_PORTAL</div>
           <div class="flex flex-col gap-3">
             <input class="bg-surface-container border-2 border-outline/30 px-4 py-3 text-sm font-bold tracking-widest focus:border-primary outline-none text-primary placeholder:text-primary/30" id="name" placeholder="ENTER NAME" type="text">
-            <button class="w-full bg-secondary-container text-secondary py-3 font-black uppercase tracking-widest hover:brightness-125 transition-all blue-glow border-b-4 border-secondary/50" id="joinBtn" style="">
+            <button class="w-full bg-secondary-container text-secondary py-3 font-black uppercase tracking-widest hover:brightness-125 transition-all blue-glow border-b-4 border-secondary/50" id="joinBtn">
               JOIN GAME
             </button>
           </div>
@@ -43,11 +43,11 @@
         <div class="flex-1 p-6 overflow-y-auto">
           <div class="text-[10px] font-black text-secondary mb-4 tracking-[0.2em]" style="">ACTIVE_NODES</div>
           <ul class="flex flex-col gap-2" id="playersList">
-            <li class="flex items-center gap-3 p-3 bg-surface-container/50 border-l-4 border-secondary" style="">
-              <span class="material-symbols-outlined text-sm text-secondary" style="">radio_button_checked</span>
-              <span class="text-xs font-bold uppercase tracking-wider" style="">Player1</span>
-              <span class="ml-auto text-[8px] bg-secondary/20 text-secondary px-1 font-black" style="">LOCAL</span>
-            </li>
+            <!-- <li class="flex items-center gap-3 p-3 bg-surface-container/50 border-l-4 border-secondary" style=""> -->
+              <!-- <span class="material-symbols-outlined text-sm text-secondary" style="">radio_button_checked</span> -->
+              <!-- <span class="text-xs font-bold uppercase tracking-wider" style="">Player1</span> -->
+              <!-- <span class="ml-auto text-[8px] bg-secondary/20 text-secondary px-1 font-black" style="">LOCAL</span> -->
+            <!-- </li> -->
           </ul>
           <button class="mt-4 w-full border-2 border-[#ff5626] text-[#ff5626] py-2 font-black uppercase text-xs tracking-widest hover:bg-[#ff5626]/10" id="startBtn" style="display: none;">
             INITIATE START
@@ -58,18 +58,25 @@
       <main class="flex-1 relative overflow-hidden bg-[radial-gradient(circle_at_center,_#2a1616_0%,_#200e0e_100%)]">
         <div class="game-table">
           <!-- Top Player -->
-          <div class="player-area top flex flex-col items-center justify-center">
-            <div class="text-[10px] text-primary/40 font-black mb-2 tracking-widest" style="">Player3</div>
-            <div class="card-grid" id="hand-top">
-              <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
-              <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+          <div class="player-area top">
+            <div class="flex flex-col items-center -rotate-180">
+              <div class="text-[10px] text-primary/40 font-black mb-2 tracking-widest" style="">Player3</div>
+              <div class="card-grid" id="hand-top">
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+              </div>
             </div>
           </div>
           <!-- Left Player -->
           <div class="player-area left">
-            <div class="flex flex-col items-center -rotate-90">
-              <div class="text-[10px] text-primary/40 font-black mb-2 tracking-widest" style="">NODE_WEST</div>
+            <div class="flex flex-col items-center -rotate-270">
+              <div class="text-[10px] text-primary/40 font-black mb-1 tracking-widest" style="">NODE_WEST</div>
               <div class="card-grid" id="hand-left">
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
                 <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
               </div>
             </div>
@@ -97,9 +104,12 @@
           </div>
           <!-- Right Player -->
           <div class="player-area right justify-end">
-            <div class="flex flex-col items-center rotate-90">
+            <div class="flex flex-col items-center rotate-270">
               <div class="text-[10px] text-primary/40 font-black mb-2 tracking-widest" style="">NODE_EAST</div>
               <div class="card-grid" id="hand-right">
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
+                <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
                 <div class="card opacity-40 border-dashed border-primary/20 bg-transparent" style="">BACK</div>
               </div>
             </div>
@@ -109,9 +119,10 @@
             <div class="flex flex-col items-center">
               <div class="text-[10px] text-secondary font-black mb-4 tracking-widest flex items-center gap-2" style="">Player1</div>
               <div class="card-grid" id="hand-bottom">
-                <div class="card border-primary text-primary glow-text" style="">7.hearts</div>
+                <div class="card border-primary text-primary glow-text" style="">07.hearts</div>
                 <div class="card border-primary text-primary glow-text" style="">08.spades</div>
                 <div class="card border-primary text-primary glow-text" style="">03.clubs</div>
+                <div class="card border-primary text-primary glow-text" style="">04.clubs</div>
               </div>
             </div>
             <!-- Bottom Controls -->

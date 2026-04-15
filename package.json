@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node --env-file=.env server.js",
+    "tailwind": "npx @tailwindcss/cli -i ./public/input.css -o ./public/output.css --watch",
     "test": "node test-logic.js"
   },
   "keywords": [],
