@@ -21,7 +21,7 @@
       <div class="flex items-center gap-4">
         <div class="bg-tertiary-container px-4 py-2 border-l-20 border-tertiary flex items-center gap-3">
           <span class="text-on-tertiary-container font-black uppercase text-xs tracking-widest" style="">CURRENT TURN:</span>
-          <span class="text-on-tertiary-container font-bold uppercase" style="">ADM_USER_01</span>
+          <span class="text-on-tertiary-container font-bold uppercase" style="">Player1</span>
         </div>
         <button class="p-2 text-[#ffb5a1] hover:bg-[#3a2424] transition-none" style=""><span class="material-symbols-outlined" style="">settings</span></button>
         <button class="p-2 text-[#ffb5a1] hover:bg-[#3a2424] transition-none" style=""><span class="material-symbols-outlined" style="">terminal</span></button>
@@ -86,7 +86,7 @@
             <!-- Deck -->
             <div class="flex flex-col items-center gap-2">
               <div class="card deck border-secondary text-secondary blue-glow relative cursor-pointer hover:scale-105 transition-transform" id="deck">
-                <span class="material-symbols-outlined text-4xl" style="">style</span>
+                <span class="material-symbols-outlined text-4xl" style="">playing_cards</span>
                 <div class="absolute -right-1 -bottom-1 w-full h-full border-r border-b border-secondary/30 -z-10"></div>
               </div>
               <div class="text-[10px] font-black text-secondary/60 tracking-widest uppercase" style="">Deck</div>
@@ -95,9 +95,19 @@
             <div class="flex flex-col items-center gap-2">
               <div class="card discardPile border-primary-container text-primary-container bg-surface-container-high/50 flex flex-col" id="discardPile">
                 <span class="text-2xl font-black glow-text" style="">7</span>
-                <span class="text-[8px]" style="">Spades</span>
+                <!-- CHECK DECK CLASS TO PUT UNICODE SIMBOLS -->
+                <span class="text-2xl" style="">♤</span>
+                <!-- $♤, ♡, ♢, ♧$ -->
               </div>
               <div class="text-[10px] font-black text-primary-container/60 tracking-widest uppercase" style="">Discard</div>
+            </div>
+            <!-- Drawn Card -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="card drawnCard border-secondary text-secondary blue-glow relative cursor-pointer hover:scale-105 transition-transform" id="drawnCard">
+                <span class="" id="" style="">EMPTY</span>
+                <div class="absolute -right-1 -bottom-1 w-full h-full border-r border-b border-secondary/30 -z-10"></div>
+              </div>
+              <div class="text-[10px] font-black text-secondary/60 tracking-widest uppercase" style="">Drawn Card</div>
             </div>
             <!-- Background visual noise -->
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-primary/5 rounded-full -z-10"></div>
@@ -119,10 +129,10 @@
             <div class="flex flex-col items-center">
               <div class="text-[10px] text-secondary font-black mb-4 tracking-widest flex items-center gap-2" style="">Player1</div>
               <div class="card-grid" id="hand-bottom">
-                <div class="card border-primary text-primary glow-text" style="">07.hearts</div>
-                <div class="card border-primary text-primary glow-text" style="">08.spades</div>
-                <div class="card border-primary text-primary glow-text" style="">03.clubs</div>
-                <div class="card border-primary text-primary glow-text" style="">04.clubs</div>
+                <div class="card border-primary text-primary glow-text" style="">EMPTY</div>
+                <div class="card border-primary text-primary glow-text" style="">EMPTY</div>
+                <div class="card border-primary text-primary glow-text" style="">EMPTY</div>
+                <div class="card border-primary text-primary glow-text" style="">EMPTY</div>
               </div>
             </div>
             <!-- Bottom Controls -->

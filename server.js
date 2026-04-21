@@ -114,7 +114,7 @@ io.on("connection", (socket) => {
     if (result.error) {
       socket.emit("error", result.error);
     } else {
-      emitUpdate();
+      socket.emit("renderDrawnCard", { success: true, data: result.data.card, error: null })
     }
   });
 

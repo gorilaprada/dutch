@@ -5,6 +5,7 @@ const nameInput = document.getElementById("name");
 const playersList = document.getElementById("playersList")
 const deck = document.getElementById("deck");
 const discardPile = document.getElementById("discardPile")
+const drawnCardHTML = document.getElementById("drawnCard")
 
 const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
 
@@ -20,6 +21,13 @@ function renderCard(card, cardIndex, targetGridId) {
 
   return `<div class="card ${cardClass} border-primary text-primary glow-text" id="${targetGridId}-${cardIndex}">${content}</div>`
 };
+
+function renderDrawnCardMarkup(card) {
+  return `
+    <span class="" id="" style="">${card.id}</span>
+    <div class="absolute -right-1 -bottom-1 w-full h-full border-r border-b border-secondary/30 -z-10"></div>
+  `
+}
 
 // Emitters
 joinBtn.addEventListener("click", () => {
@@ -90,6 +98,16 @@ socket.on("updatePlayersList", (players) => {
 
   const isHost = players.length >= 2 && players[0].id === socket.id
   document.getElementById("startBtn").style.display = isHost ? "block" : "none";
+})
+
+socket.on("renderDrawnCard", (result) => {
+  drawnCardHTML.innerHTML = ""
+
+  card = result.data;
+
+  const markup = renderDrawnCardMarkup(card);
+
+  drawnCardHTML.insertAdjacentHTML("beforeend", markup);
 })
 
 socket.on("error", (message) => {
