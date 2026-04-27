@@ -70,9 +70,8 @@ socket.on("gameUpdated", (response) => {
       }
     })
 
-    const discard = document.getElementById("discardPile");
     if (data.discardTop) {
-      discard.innerHTML = `${data.discardTop.id}`
+      discardPile.innerHTML = `${data.discardTop.id}`
     }
   } else {
     alert("error: Game not updated");
@@ -103,11 +102,19 @@ socket.on("updatePlayersList", (players) => {
 socket.on("renderDrawnCard", (result) => {
   drawnCardHTML.innerHTML = ""
 
-  card = result.data;
+  card = result.data.card;
+  discardTop = result.data.discardTop;
 
   const markup = renderDrawnCardMarkup(card);
 
   drawnCardHTML.insertAdjacentHTML("beforeend", markup);
+
+  // Render discard top card if player drew for discard
+  if (discardTop) {
+    discardPile.innerHTML = `${discardTop.id}`
+  } else {
+    discardPile.innerHTML = `EMPTY`
+  }
 })
 
 socket.on("error", (message) => {
