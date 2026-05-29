@@ -2,10 +2,11 @@ const socket = io();
 
 const joinBtn = document.getElementById("joinBtn");
 const nameInput = document.getElementById("name");
-const playersList = document.getElementById("playersList")
+const playersList = document.getElementById("playersList");
 const deck = document.getElementById("deck");
-const discardPile = document.getElementById("discardPile")
-const drawnCardHTML = document.getElementById("drawnCard")
+const discardPile = document.getElementById("discardPile");
+const drawnCardHTML = document.getElementById("drawnCard");
+const discardBtn = document.getElementById("discardBtn");
 
 const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
 
@@ -55,6 +56,11 @@ discardPile.addEventListener("click", () => {
   socket.emit("drawCard", { drawFrom: "discardPile" });
 });
 
+discardBtn.addEventListener("click", () => {
+  drawnCardHTML.innerHTML = "EMPTY";
+  socket.emit("discardCard");
+});
+
 // Rendering logic
 socket.on("gameUpdated", (response) => {
   if (response.success) {
@@ -100,7 +106,7 @@ socket.on("updatePlayersList", (players) => {
 })
 
 socket.on("renderDrawnCard", (result) => {
-  drawnCardHTML.innerHTML = ""
+  drawnCardHTML.innerHTML = "";
 
   card = result.data.card;
   discardTop = result.data.discardTop;

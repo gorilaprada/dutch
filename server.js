@@ -8,16 +8,16 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer)
 
-const PORT = process.env.PORT || 3000;
-const SERVER_URL = process.env.SERVER_URL;
+// const PORT = process.env.PORT || 3000;
+// const SERVER_URL = process.env.SERVER_URL;
 
 // Serving HTML
 app.use(express.static("public"));
 
 // Listening
-httpServer.listen(PORT, "0.0.0.0", () => {
+httpServer.listen(3000, "0.0.0.0", () => {
   console.log("server is running")
-  console.log(`access server at ${SERVER_URL}:${PORT}`)
+  // console.log(`access server at ${SERVER_URL}:${PORT}`)
 })
 
 const game = new GameState();
@@ -47,15 +47,6 @@ function getScrubbedState(game) {
 function emitUpdate() {
   io.emit("gameUpdated", { success: true, data: getScrubbedState(game), error: null });
 };
-
-function discardCard() {
-  const result = game.discardCard(socket.id);
-  if (!result.success) {
-    socket.emit("error", result.error);
-  } else {
-    emitUpdate();
-  }
-}
 
 // Socket.io Logic
 io.on("connection", (socket) => {
@@ -105,7 +96,15 @@ io.on("connection", (socket) => {
   socket.on("startGame", () => {
     if (!game.playerOrder.length) {
       game.startGame();
+
+      game.cardMemorization();
       emitUpdate();
+
+      setTimeout(() => {
+        const playersList = Array.from(game.players.values());
+        playersList.forEach(player => player.hideAllCards());
+        emitUpdate();
+      }, 5000);
     }
   });
 
@@ -124,10 +123,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("discardCard", () => {
-    try {
-      discardCard();
-    } catch (error) {
-      console.error("Error at discardCard", error);
+    const result = game.discardCard(socket.id);
+    if (result.error) {
+      socket.emit("error", result.error);
+    } else {
+      emitUpdate();
     }
   });
 
