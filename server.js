@@ -131,13 +131,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("switchCards", (data) => {
-    const result = game.switchCards(socket.id, data.handIndex);
-    if (!result.success) {
+  socket.on("switchCards", (handIndex) => {
+    const result = game.switchCards(socket.id, handIndex);
+    if (result.error) {
       socket.emit("error", result.error);
     } else {
       emitUpdate();
     }
   });
+
+  // socket.on("queenPower", (data) => {
+  //   const result = game.queenPower
+  // })
 });
 

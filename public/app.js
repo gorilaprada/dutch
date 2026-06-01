@@ -7,6 +7,7 @@ const deck = document.getElementById("deck");
 const discardPile = document.getElementById("discardPile");
 const drawnCardHTML = document.getElementById("drawnCard");
 const discardBtn = document.getElementById("discardBtn");
+const switchBtn = document.getElementById("switchBtn");
 
 const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
 
@@ -20,7 +21,7 @@ function renderCard(card, cardIndex, targetGridId) {
   const content = card.isFaceUp ? `${card.id}` : "Facedown";
   const cardClass = card.isFaceUp ? "card face-up" : "card face-down";
 
-  return `<div class="card ${cardClass} border-primary text-primary glow-text" id="${targetGridId}-${cardIndex}">${content}</div>`
+  return `<div class="card ${cardClass} border-primary text-primary glow-text" id="${targetGridId}-${cardIndex}" onclick="handleCardClick(${cardIndex})">${content}</div>`
 };
 
 function renderDrawnCardMarkup(card) {
@@ -60,6 +61,11 @@ discardBtn.addEventListener("click", () => {
   drawnCardHTML.innerHTML = "EMPTY";
   socket.emit("discardCard");
 });
+
+function handleCardClick(handIndex) {
+  drawnCardHTML.innerHTML = "EMPTY";
+  socket.emit("switchCards", handIndex);
+};
 
 // Rendering logic
 socket.on("gameUpdated", (response) => {
