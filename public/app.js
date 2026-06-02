@@ -1,5 +1,6 @@
 const socket = io();
 
+// DOM
 const joinBtn = document.getElementById("joinBtn");
 const nameInput = document.getElementById("name");
 const playersList = document.getElementById("playersList");
@@ -8,8 +9,11 @@ const discardPile = document.getElementById("discardPile");
 const drawnCardHTML = document.getElementById("drawnCard");
 const discardBtn = document.getElementById("discardBtn");
 const switchBtn = document.getElementById("switchBtn");
+const informationContainer = document.getElementById("information");
 
+// For client side
 const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
+let pendingPower = null;
 
 // Helper function 
 function reorderPlayers(players, myId) {
@@ -17,17 +21,23 @@ function reorderPlayers(players, myId) {
   return [...players.slice(index), ...players.slice(0, index)];
 }
 
-function renderCard(card, cardIndex, targetGridId) {
+function renderCard(card, cardIndex, targetGridId, playerId) {
   const content = card.isFaceUp ? `${card.id}` : "Facedown";
-  const cardClass = card.isFaceUp ? "card face-up" : "card face-down";
+  const cardClass = card.isFaceUp ? "card-up" : "card-down";
 
-  return `<div class="card ${cardClass} border-primary text-primary glow-text" id="${targetGridId}-${cardIndex}" onclick="handleCardClick(${cardIndex})">${content}</div>`
+  return `<div class="card ${cardClass} border-primary text-primary glow-text" id="${targetGridId}-${cardIndex}" onclick="handleCardClick('${playerId}', ${cardIndex})">${content}</div>`
 };
 
 function renderDrawnCardMarkup(card) {
   return `
     <span class="" id="" style="">${card.id}</span>
     <div class="absolute -right-1 -bottom-1 w-full h-full border-r border-b border-secondary/30 -z-10"></div>
+  `
+}
+
+function renderInformation(strToDisplay) {
+  return  `
+    <span class="text-on-tertiary-container font-bold uppercase" style="">${strToDisplay}</span>
   `
 }
 
@@ -62,10 +72,20 @@ discardBtn.addEventListener("click", () => {
   socket.emit("discardCard");
 });
 
-function handleCardClick(handIndex) {
+function handleCardClick(playerId, handIndex) {
+  // Click for power
+  if (pendingPower === "queen") {
+    socket.emit("queenPower", { targetPlayerId: playerId, handIndex: handIndex});
+    pendingPower = null;
+    return;
+  } 
+
+  // Default click
   drawnCardHTML.innerHTML = "EMPTY";
   socket.emit("switchCards", handIndex);
+  return;
 };
+
 
 // Rendering logic
 socket.on("gameUpdated", (response) => {
@@ -77,17 +97,31 @@ socket.on("gameUpdated", (response) => {
       const grid = document.getElementById(gridIds[i]);
       if (grid) {
         grid.innerHTML = player.hand
-          .map((card, index) => renderCard(card, index, gridIds[i]))
+          .map((card, index) => renderCard(card, index, gridIds[i], player.id))
           .join("");
       }
     })
 
-    if (data.discardTop) {
-      discardPile.innerHTML = `${data.discardTop.id}`
+    if (data.phase === "drawing" || data.phase === "deciding") {
+      informationContainer.innerHTML = "";
+      pendingPower = null;
     }
+
+    if (data.discardTop) {
+      discardPile.innerHTML = `${data.discardTop.id}`;
+    }
+
+    if (data.phase === "power_queen" && data.pendingPowerOwner === socket.id) {
+      pendingPower = "queen";
+      informationContainer.innerHTML = "";
+      informationMarkup = renderInformation("Choose any card to see it!");
+      informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+    }
+
   } else {
     alert("error: Game not updated");
   }
+  return;
 });
 
 socket.on("updatePlayersList", (players) => {

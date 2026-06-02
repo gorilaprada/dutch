@@ -28,6 +28,9 @@ function getScrubbedState(game) {
     discardTop: game.discardPile[game.discardPile.length - 1] || null,
     playerOrder: game.playerOrder,
     activePlayer: game.playerOrder[game.turnIndex],
+    state: game.state,
+    phase: game.phase,
+    pendingPowerOwner: game.pendingPowerOwner,
     players: game.playerOrder.map(id => {
       const player = game.players.get(id);
       return {
@@ -75,8 +78,8 @@ io.on("connection", (socket) => {
       player.drawnCard = null;
 
       // Cancel their pending power if they had one
-      if (game.pendingPower?.owner === socket.id) {
-        game.pendingPower = null;
+      if (game.pendingPowerOwner === socket.id) {
+        game.pendingPowerOwner = null;
         game.phase = "drawing";
       }
 
@@ -140,8 +143,20 @@ io.on("connection", (socket) => {
     }
   });
 
-  // socket.on("queenPower", (data) => {
-  //   const result = game.queenPower
-  // })
+  socket.on("queenPower", (data) => {
+    const result = game.queenPower(socket.id, data.targetPlayerId, data.handIndex);
+    if (result.error) {
+      socket.emit("error", result.error);
+      return;
+    }
+    emitUpdate();
+
+    setTimeout(() => {
+      const target = game.players.get(data.targetPlayerId);
+      if (target) target.hand[data.handIndex].isFaceUp = false;
+      emitUpdate();
+    }, 4000);
+
+  })
 });
 
