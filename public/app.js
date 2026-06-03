@@ -9,12 +9,14 @@ const discardPile = document.getElementById("discardPile");
 const drawnCardHTML = document.getElementById("drawnCard");
 const discardBtn = document.getElementById("discardBtn");
 const switchBtn = document.getElementById("switchBtn");
+const stackBtn = document.getElementById("stackBtn");
 const informationContainer = document.getElementById("information");
 
 // For client side
 const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
 let pendingPower = null;
 let jackSelection = null;
+let wantToStack = false;
 
 // Helper function 
 function reorderPlayers(players, myId) {
@@ -68,17 +70,33 @@ discardPile.addEventListener("click", () => {
   socket.emit("drawCard", { drawFrom: "discardPile" });
 });
 
+stackBtn.addEventListener("click", () => {
+  if (wantToStack === false) {
+    wantToStack = true;
+
+    informationContainer.innerHTML = "";
+    informationMarkup = renderInformation("Choose one card from your deck to STACK!");
+    informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+  } else {
+    wantToStack = false;
+
+    informationContainer.innerHTML = "";
+  }
+});
+
 discardBtn.addEventListener("click", () => {
   drawnCardHTML.innerHTML = "EMPTY";
   socket.emit("discardCard");
 });
 
+// Handles the follwing emits: queenPower, jackPower and switchCards
 function handleCardClick(playerId, handIndex) {
-  // Click for power
+  // Emit queenPower
   if (pendingPower === "queen") {
     socket.emit("queenPower", { targetPlayerId: playerId, handIndex: handIndex});
     pendingPower = null;
     return;
+  // Emit jackPower
   } else if (pendingPower === "jack") {
     if (!jackSelection) {
       jackSelection = { player1Id: playerId, index1: handIndex};
@@ -97,6 +115,10 @@ function handleCardClick(playerId, handIndex) {
       jackSelection = null;
       return;
     }
+  // Emit stack
+  } else if (wantToStack === true) {
+    socket.emit("stack", handIndex);
+    return;
   }
 
   // Default click

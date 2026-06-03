@@ -166,7 +166,15 @@ io.on("connection", (socket) => {
       emitUpdate();
     }
     return;
-  })
+  });
 
+  socket.on("stack", (handIndex) => {
+    const result = game.stack(socket.id, handIndex);
+    if (result.error) {
+      socket.emit("error", result.error);
+    } else {
+      emitUpdate();
+    }
+  });
 });
 
