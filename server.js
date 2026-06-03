@@ -147,16 +147,26 @@ io.on("connection", (socket) => {
     const result = game.queenPower(socket.id, data.targetPlayerId, data.handIndex);
     if (result.error) {
       socket.emit("error", result.error);
-      return;
-    }
-    emitUpdate();
-
-    setTimeout(() => {
-      const target = game.players.get(data.targetPlayerId);
-      if (target) target.hand[data.handIndex].isFaceUp = false;
+    } else {
       emitUpdate();
-    }, 4000);
+      setTimeout(() => {
+        const target = game.players.get(data.targetPlayerId);
+        if (target) target.hand[data.handIndex].isFaceUp = false;
+        emitUpdate();
+      }, 4000);
+    }
+    return;
+  });
 
+  socket.on("jackPower", (data) => {
+    const result = game.jackPower(socket.id, data.player1Id, data.index1, data.player2Id, data.index2);
+    if (result.error) {
+      socket.emit("error", result.error);
+    } else {
+      emitUpdate();
+    }
+    return;
   })
+
 });
 

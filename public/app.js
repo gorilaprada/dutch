@@ -14,6 +14,7 @@ const informationContainer = document.getElementById("information");
 // For client side
 const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
 let pendingPower = null;
+let jackSelection = null;
 
 // Helper function 
 function reorderPlayers(players, myId) {
@@ -78,7 +79,25 @@ function handleCardClick(playerId, handIndex) {
     socket.emit("queenPower", { targetPlayerId: playerId, handIndex: handIndex});
     pendingPower = null;
     return;
-  } 
+  } else if (pendingPower === "jack") {
+    if (!jackSelection) {
+      jackSelection = { player1Id: playerId, index1: handIndex};
+      informationContainer.innerHTML = "";
+      informationMarkup = renderInformation("Choose another card to swap it with!");
+      informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+      return;
+    } else {
+      socket.emit("jackPower", {
+        player1Id: jackSelection.player1Id,
+        index1: jackSelection.index1,
+        player2Id: playerId,
+        index2: handIndex
+      });
+      pendingPower = null;
+      jackSelection = null;
+      return;
+    }
+  }
 
   // Default click
   drawnCardHTML.innerHTML = "EMPTY";
@@ -102,19 +121,24 @@ socket.on("gameUpdated", (response) => {
       }
     })
 
-    if (data.phase === "drawing" || data.phase === "deciding") {
-      informationContainer.innerHTML = "";
-      pendingPower = null;
-    }
-
     if (data.discardTop) {
       discardPile.innerHTML = `${data.discardTop.id}`;
     }
 
-    if (data.phase === "power_queen" && data.pendingPowerOwner === socket.id) {
+    if (data.phase === "drawing" || data.phase === "deciding") {
+      informationContainer.innerHTML = "";
+      pendingPower = null;
+      jackSelection = null;
+    } else if (data.phase === "power_queen" && data.pendingPowerOwner === socket.id) {
       pendingPower = "queen";
       informationContainer.innerHTML = "";
       informationMarkup = renderInformation("Choose any card to see it!");
+      informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+    } else if (data.phase === "power_jack" && data.pendingPowerOwner === socket.id) {
+      pendingPower = "jack";
+      jackSelection = null;
+      informationContainer.innerHTML = "";
+      informationMarkup = renderInformation("Choose any two cards to swap them!");
       informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
     }
 
