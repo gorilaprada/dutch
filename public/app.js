@@ -8,7 +8,6 @@ const deck = document.getElementById("deck");
 const discardPile = document.getElementById("discardPile");
 const drawnCardHTML = document.getElementById("drawnCard");
 const discardBtn = document.getElementById("discardBtn");
-const switchBtn = document.getElementById("switchBtn");
 const stackBtn = document.getElementById("stackBtn");
 const informationContainer = document.getElementById("information");
 
@@ -17,6 +16,7 @@ const gridIds = ["hand-bottom", "hand-left", "hand-top", "hand-right"];
 let pendingPower = null;
 let jackSelection = null;
 let wantToStack = false;
+let informationMarkup;
 
 // Helper function 
 function reorderPlayers(players, myId) {
@@ -118,6 +118,8 @@ function handleCardClick(playerId, handIndex) {
   // Emit stack
   } else if (wantToStack === true) {
     socket.emit("stack", handIndex);
+    wantToStack = false;
+    informationContainer.innerHTML = "";
     return;
   }
 
