@@ -101,7 +101,28 @@ io.on("connection", (socket) => {
       game.startGame();
 
       game.cardMemorization();
-      emitUpdate();
+
+      // Special behavior for card cardMemorization only
+      const baseState = getScrubbedState(game);
+      game.playerOrder.forEach(playerId => {
+        const personalState = {
+          ...baseState,
+          players: baseState.players.map(p => ({
+            ...p,
+            hand: p.hand.map(card => {
+              const canSee = card.isFaceUp && p.id === playerId;
+              return {
+                id: canSee ? card.id : null,
+                suit: canSee ? card.suit : null,
+                value: canSee ? card.value : null,
+                isFaceUp: canSee,
+              }
+            })
+          }))
+        };
+        io.to(playerId).emit("gameUpdated", { success: true, data: personalState, error: null });
+      });
+
 
       setTimeout(() => {
         const playersList = Array.from(game.players.values());
