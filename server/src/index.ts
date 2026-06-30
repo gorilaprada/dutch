@@ -8,11 +8,15 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer)
 
+// =================
+// Types
+// =================
+
 // const PORT = process.env.PORT || 3000;
 // const SERVER_URL = process.env.SERVER_URL;
 
 // Serving HTML
-app.use(express.static("public"));
+app.use(express.static("../../client/"));
 
 // Listening
 httpServer.listen(3000, "0.0.0.0", () => {
@@ -23,7 +27,7 @@ httpServer.listen(3000, "0.0.0.0", () => {
 const game = new GameState();
 
 // Helper functions
-function getScrubbedState(game) {
+function getScrubbedState(game: GameState) {
   return {
     discardTop: game.discardPile[game.discardPile.length - 1] || null,
     playerOrder: game.playerOrder,
@@ -34,9 +38,9 @@ function getScrubbedState(game) {
     players: game.playerOrder.map(id => {
       const player = game.players.get(id);
       return {
-        id: player.id,
-        name: player.name,
-        hand: player.hand.map(card => ({
+        id: player!.id,
+        name: player!.name,
+        hand: player!.hand.map(card => ({
           id: card.isFaceUp ? card.id : null,
           suit: card.isFaceUp ? card.suit : null,
           value: card.isFaceUp ? card.value : null,
@@ -172,7 +176,7 @@ io.on("connection", (socket) => {
       emitUpdate();
       setTimeout(() => {
         const target = game.players.get(data.targetPlayerId);
-        if (target) target.hand[data.handIndex].isFaceUp = false;
+        if (target) target.hand[data.handIndex]!.isFaceUp = false;
         emitUpdate();
       }, 4000);
     }

@@ -28,7 +28,7 @@ export default class GameState {
   addPlayer(socketId, name) {
     // Validation
     if (this.players.size >= this.maxPlayers) {
-      return { success: false, data: null, error: "Lobby full" }
+      return { error: "Lobby full" }
     };
 
     // Logic
@@ -36,7 +36,7 @@ export default class GameState {
     this.players.set(socketId, newPlayer)
 
     // Function output
-    return { success: true, data: newPlayer, error: null };
+    return { error: null };
   }
 
   dealCards() {
@@ -49,7 +49,7 @@ export default class GameState {
     })
 
     // Function output
-    return { success: true, data: null, error: null };
+    return { error: null };
   }
 
   initiateDiscardPile() {
@@ -59,7 +59,7 @@ export default class GameState {
     this.discardPile.push(firstCard);
 
     // Function output
-    return { success: true, data: null, error: null };
+    return { error: null };
   }
 
   cardMemorization() {
@@ -69,7 +69,7 @@ export default class GameState {
     players.forEach(player => player.setCardVisibility([0, 1], true));
 
     // Function output
-    return { succes: true, data: "Return the data to display cards", error: null }
+    return { error: null }
   }
 
   // Player Methods
@@ -81,7 +81,7 @@ export default class GameState {
 
     // Validation
     if (!player) return { error: "Player not found" };
-    if (player.drawnCard) return { error: "Card already drawn!"};
+    if (player.drawnCard) return { error: "Card already drawn!" };
     if (socketId !== activePlayerId) {
       return { error: "Not your turn!" }
     }
@@ -101,7 +101,6 @@ export default class GameState {
 
     // Function output
     return {
-      success: true,
       data: { card: drawnCard, discardTop: this.discardPile ? this.discardPile[this.discardPile.length - 1] : null },
       error: null
     };
@@ -113,18 +112,18 @@ export default class GameState {
     const activePlayerId = this.playerOrder[this.turnIndex];
 
     // Validation
-    if (!player) return { success: false, data: null, error: "Player not found" }
-    if (!player.drawnCard) return { success: false, data: null, error: "No card drawn" }
+    if (!player) return { error: "Player not found" }
+    if (!player.drawnCard) return { error: "No card drawn" }
     if (socketId !== activePlayerId) {
-      return { success: false, data: null, error: "Not your turn!" }
+      return { error: "Not your turn!" }
     }
 
     if (this.phase !== "deciding") {
-      return { success: false, data: null, error: "Cannot perform this action because of the phase of the game" }
+      return { error: "Cannot perform this action because of the phase of the game" }
     }
 
     if (!Number.isInteger(handIndex) || handIndex < 0 || handIndex >= player.hand.length) {
-      return { success: false, data: null, error: "Invalid Card" }
+      return { error: "Invalid Card" }
     }
 
     // Logic (changes made to the game state)
@@ -139,20 +138,20 @@ export default class GameState {
     if (oldCard.value === 11) {
       this.phase = "power_jack";
       this.pendingPowerOwner = socketId;
-      return { success: true, data: { pendingPower: this.pendingPower, phase: this.phase }, error: null }
+      return { error: null }
     }
 
     if (oldCard.value === 12) {
       this.phase = "power_queen";
       this.pendingPowerOwner = socketId;
-      return { success: true, data: { pendingPower: this.pendingPower, phase: this.phase }, error: null }
+      return { error: null }
     }
 
     this.phase = "drawing";
     this.turnIndex = (this.turnIndex + 1) % this.playerOrder.length
 
     // Function output
-    return { success: true, data: oldCard, error: null };
+    return { error: null };
   }
 
   discardCard(socketId) {
@@ -161,15 +160,15 @@ export default class GameState {
     const activePlayerId = this.playerOrder[this.turnIndex];
 
     // Validation
-    if (!player) return { success: false, data: null, error: "Player not found" }
-    if (!player.drawnCard) return { success: false, data: null, error: "No card drawn" }
+    if (!player) return { error: "Player not found" }
+    if (!player.drawnCard) return { error: "No card drawn" }
 
     if (socketId !== activePlayerId) {
-      return { success: false, data: null, error: "Not your turn!" }
+      return { error: "Not your turn!" }
     }
 
     if (this.phase !== "deciding") {
-      return { success: false, data: null, error: "Cannot perform this action because of the phase of the game" }
+      return { error: "Cannot perform this action because of the phase of the game" }
     }
 
     // Logic (changes made to the game state)
@@ -182,26 +181,26 @@ export default class GameState {
     if (discardCard.value === 11) {
       this.phase = "power_jack";
       this.pendingPowerOwner = socketId;
-      return { success: true, data: { pendingPower: this.pendingPower, phase: this.phase }, error: null }
+      return { error: null }
     }
 
     if (discardCard.value === 12) {
       this.phase = "power_queen";
       this.pendingPowerOwner = socketId;
-      return { success: true, data: { pendingPower: this.pendingPower, phase: this.phase }, error: null }
+      return { error: null }
     }
 
     this.phase = "drawing";
     this.turnIndex = (this.turnIndex + 1) % this.playerOrder.length
 
     // Function output
-    return { success: true, data: { power: null, phase: this.phase }, error: null };
+    return { error: null };
   }
 
   stack(socketId, handIndex) {
     // Set values
     const player = this.players.get(socketId);
-    if (!player) return { success: false, error: "Player not found" }
+    if (!player) return { error: "Player not found" }
     const stackCard = player.hand[handIndex];
     const topDiscard = this.discardPile[this.discardPile.length - 1];
 
@@ -209,10 +208,10 @@ export default class GameState {
     if (this.canStack === false) {
       const penaltyCard = this.deck.deck.pop()
       player.hand.push(penaltyCard);
-      return { success: false, data: null, error: "Cannot discard, too slow!" }
+      return { error: "Cannot discard, too slow!" }
     }
 
-    if (!stackCard || !topDiscard) return { success: false, data: null, error: "Invalid Move" }
+    if (!stackCard || !topDiscard) return { error: "Invalid Move" }
 
     // Logic (changes made to the game state)
     if (stackCard.value === topDiscard.value) {
@@ -224,16 +223,13 @@ export default class GameState {
       this.canStack = false;
 
       // Function output
-      return {
-        success: true,
-        data: { stackCard },
-        error: null
-      }
+      return { error: null }
+
     } else {
       // Special penalty for stacking wrong
       const penaltyCard = this.deck.deck.pop()
       player.hand.push(penaltyCard);
-      return { success: false, data: null, error: "Cannot discard." }
+      return { error: "Cannot discard." }
     };
   };
 
@@ -244,11 +240,11 @@ export default class GameState {
 
     // Validation
     if (this.phase !== "power_jack" || this.pendingPowerOwner !== socketId) {
-      return { success: false, data: null, error: "Not your power to execute" }
+      return { error: "Not your power to execute" }
     }
 
     if (!p1 || !p2 || !p1.hand[index1] || !p2.hand[index2]) {
-      return { success: false, data: null, error: "Invalid target cards" }
+      return { error: "Invalid target cards" }
     }
 
     // Logic (change smade to the state of the game)
@@ -262,7 +258,7 @@ export default class GameState {
     this.turnIndex = (this.turnIndex + 1) % this.playerOrder.length;
 
     // Function output
-    return { success: true, data: null, error: null }
+    return { error: null }
   };
 
   queenPower(socketId, targetPlayerId, handIndex) {
@@ -272,7 +268,7 @@ export default class GameState {
 
     // Validation
     if (this.phase !== "power_queen" || this.pendingPowerOwner !== socketId) {
-      return { success: false, data: null, error: "Not your power to execute" }
+      return { error: "Not your power to execute" }
     }
 
     // Logic (changes made to the game state)
@@ -284,6 +280,6 @@ export default class GameState {
     this.turnIndex = (this.turnIndex + 1) % this.playerOrder.length;
 
     // Function output
-    return { success: true, data: { revealedCard: card }, error: null }
+    return { error: null }
   }
 };
