@@ -1,5 +1,5 @@
 import Player from './Player.js'
-import Deck from './Deck.js'
+import Deck from './Deck.ts'
 
 export default class GameState {
   constructor() {
