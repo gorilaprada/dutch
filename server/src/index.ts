@@ -8,15 +8,17 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer)
 
-// =================
+
+//===================
 // Types
-// =================
+//===================
 
 // const PORT = process.env.PORT || 3000;
 // const SERVER_URL = process.env.SERVER_URL;
+const CLIENT_DIR = String(process.env.CLIENT_DIR);
 
 // Serving HTML
-app.use(express.static("../../client/"));
+app.use(express.static(CLIENT_DIR));
 
 // Listening
 httpServer.listen(3000, "0.0.0.0", () => {
@@ -32,10 +34,10 @@ function getScrubbedState(game: GameState) {
     discardTop: game.discardPile[game.discardPile.length - 1] || null,
     playerOrder: game.playerOrder,
     activePlayer: game.playerOrder[game.turnIndex],
-    state: game.state,
+    fromDiscard: game.fromDiscard,
     phase: game.phase,
     pendingPowerOwner: game.pendingPowerOwner,
-    players: game.playerOrder.map(id => {
+    players: game.playerOrder.map((id: string) => {
       const player = game.players.get(id);
       return {
         id: player!.id,
@@ -56,21 +58,22 @@ function emitUpdate() {
 };
 
 // Socket.io Logic
-io.on("connection", (socket) => {
+io.on("connection", (socket): void => {
   socket.on("joinGame", (data) => {
     if (typeof data.name !== "string" || data.name.trim().length === 0) {
       socket.emit("error", "Invalid name");
       return;
     }
 
-    const player = game.addPlayer(socket.id, data.name)
+    const result = game.addPlayer(socket.id, data.name)
 
-    if (player.error) {
-      socket.emit("error", player.error);
-    } else {
-      const playersList = Array.from(game.players.values());
-      io.emit("updatePlayersList", playersList);
+    if (result.error) {
+      socket.emit("error", result.error);
+      return;
     }
+
+    const playersList = Array.from(game.players.values());
+    io.emit("updatePlayersList", playersList);
   })
 
   socket.on("disconnect", () => {
@@ -138,68 +141,71 @@ io.on("connection", (socket) => {
 
   socket.on("drawCard", (data) => {
     const result = game.drawFrom(socket.id, data.drawFrom);
-    if (result.error) {
+    if (result.error || !result.data) {
       socket.emit("error", result.error);
-    } else {
-      socket.emit("renderDrawnCard", {
-        success: true,
-        data: { card: result.data.card, discardTop: result.data.discardTop },
-        error: null
-      });
-      emitUpdate();
+      return;
     }
+
+    socket.emit("renderDrawnCard", {
+      data: { card: result.data.card, discardTop: result.data.discardTop },
+      error: null
+    });
+    emitUpdate();
   });
 
   socket.on("discardCard", () => {
     const result = game.discardCard(socket.id);
     if (result.error) {
       socket.emit("error", result.error);
-    } else {
-      emitUpdate();
+      return;
     }
+
+    emitUpdate();
   });
 
   socket.on("switchCards", (handIndex) => {
     const result = game.switchCards(socket.id, handIndex);
     if (result.error) {
       socket.emit("error", result.error);
-    } else {
-      emitUpdate();
     }
+
+    emitUpdate();
   });
 
   socket.on("queenPower", (data) => {
     const result = game.queenPower(socket.id, data.targetPlayerId, data.handIndex);
     if (result.error) {
       socket.emit("error", result.error);
-    } else {
-      emitUpdate();
-      setTimeout(() => {
-        const target = game.players.get(data.targetPlayerId);
-        if (target) target.hand[data.handIndex]!.isFaceUp = false;
-        emitUpdate();
-      }, 4000);
+      return;
     }
-    return;
+
+    emitUpdate();
+    setTimeout(() => {
+      const target = game.players.get(data.targetPlayerId);
+      if (target) target.hand[data.handIndex]!.isFaceUp = false;
+      emitUpdate();
+    }, 4000);
+
   });
 
   socket.on("jackPower", (data) => {
     const result = game.jackPower(socket.id, data.player1Id, data.index1, data.player2Id, data.index2);
     if (result.error) {
       socket.emit("error", result.error);
-    } else {
-      emitUpdate();
+      return;
     }
-    return;
+
+    emitUpdate();
   });
 
   socket.on("stack", (handIndex) => {
     const result = game.stack(socket.id, handIndex);
     if (result.error) {
       socket.emit("error", result.error);
-    } else {
-      emitUpdate();
+      return;
     }
+
+    emitUpdate();
   });
 });
 

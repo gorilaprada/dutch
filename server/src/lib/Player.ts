@@ -7,8 +7,8 @@ export default class Player {
   isReady: boolean = false;
 
   constructor(
-    id: string,
-    name: string
+    public id: string,
+    public name: string
   ) { }
 
   addCards(cards: Card[]): void {

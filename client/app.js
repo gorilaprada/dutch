@@ -39,7 +39,7 @@ function renderDrawnCardMarkup(card) {
 }
 
 function renderInformation(strToDisplay) {
-  return  `
+  return `
     <span class="text-on-tertiary-container font-bold uppercase" style="">${strToDisplay}</span>
   `
 }
@@ -76,7 +76,7 @@ stackBtn.addEventListener("click", () => {
 
     informationContainer.innerHTML = "";
     informationMarkup = renderInformation("Choose one card from your deck to STACK!");
-    informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+    informationContainer.insertAdjacentHTML("beforeend", informationMarkup);
   } else {
     wantToStack = false;
 
@@ -85,7 +85,6 @@ stackBtn.addEventListener("click", () => {
 });
 
 discardBtn.addEventListener("click", () => {
-  drawnCardHTML.innerHTML = "EMPTY";
   socket.emit("discardCard");
 });
 
@@ -93,16 +92,16 @@ discardBtn.addEventListener("click", () => {
 function handleCardClick(playerId, handIndex) {
   // Emit queenPower
   if (pendingPower === "queen") {
-    socket.emit("queenPower", { targetPlayerId: playerId, handIndex: handIndex});
+    socket.emit("queenPower", { targetPlayerId: playerId, handIndex: handIndex });
     pendingPower = null;
     return;
-  // Emit jackPower
+    // Emit jackPower
   } else if (pendingPower === "jack") {
     if (!jackSelection) {
-      jackSelection = { player1Id: playerId, index1: handIndex};
+      jackSelection = { player1Id: playerId, index1: handIndex };
       informationContainer.innerHTML = "";
       informationMarkup = renderInformation("Choose another card to swap it with!");
-      informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+      informationContainer.insertAdjacentHTML("beforeend", informationMarkup);
       return;
     } else {
       socket.emit("jackPower", {
@@ -115,7 +114,7 @@ function handleCardClick(playerId, handIndex) {
       jackSelection = null;
       return;
     }
-  // Emit stack
+    // Emit stack
   } else if (wantToStack === true) {
     socket.emit("stack", handIndex);
     wantToStack = false;
@@ -124,7 +123,6 @@ function handleCardClick(playerId, handIndex) {
   }
 
   // Default click
-  drawnCardHTML.innerHTML = "EMPTY";
   socket.emit("switchCards", handIndex);
   return;
 };
@@ -149,6 +147,10 @@ socket.on("gameUpdated", (response) => {
       discardPile.innerHTML = `${data.discardTop.id}`;
     }
 
+    if (data.phase !== "deciding") {
+      drawnCardHTML.innerHTML = "EMPTY";
+    }
+
     if (data.phase === "drawing" || data.phase === "deciding") {
       informationContainer.innerHTML = "";
       pendingPower = null;
@@ -157,14 +159,15 @@ socket.on("gameUpdated", (response) => {
       pendingPower = "queen";
       informationContainer.innerHTML = "";
       informationMarkup = renderInformation("Choose any card to see it!");
-      informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+      informationContainer.insertAdjacentHTML("beforeend", informationMarkup);
     } else if (data.phase === "power_jack" && data.pendingPowerOwner === socket.id) {
       pendingPower = "jack";
       jackSelection = null;
       informationContainer.innerHTML = "";
       informationMarkup = renderInformation("Choose any two cards to swap them!");
-      informationContainer.insertAdjacentHTML("beforeend", informationMarkup); 
+      informationContainer.insertAdjacentHTML("beforeend", informationMarkup);
     }
+
 
   } else {
     alert("error: Game not updated");
@@ -213,7 +216,7 @@ socket.on("renderDrawnCard", (result) => {
 
 socket.on("error", (message) => {
   alert(message);
-  joinBtn.disabled = true;
+  // joinBtn.disabled = true;
 });
 
 
