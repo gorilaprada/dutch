@@ -1,4 +1,4 @@
-import type { Card } from "./Deck.ts";
+import type { Card } from "./types.ts";
 
 export default class Player {
   hand: Card[] = [];

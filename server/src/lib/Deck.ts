@@ -1,11 +1,4 @@
-type Suits = "♤" | "♡" | "♢" | "♧";
-
-export type Card = {
-  id: string;
-  suit: Suits;
-  value: number;
-  isFaceUp: boolean;
-}
+import type { Card, Suits } from "./types.ts";
 
 export default class Deck {
   suits: Suits[] = ["♤", "♡", "♢", "♧"];

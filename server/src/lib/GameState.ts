@@ -1,26 +1,7 @@
 import Player from './Player.js'
 import Deck from './Deck.js'
-import type { Card } from "./Deck.ts";
+import type { Result, DrawResult, Phase, Card } from "./types.ts";
 
-//===================
-// Types
-//===================
-export interface Result {
-  error: string | null;
-}
-
-export interface DrawResult extends Result {
-  data?: {
-    card: Card,
-    discardTop: Card | null;
-  }
-}
-
-type Phase = "drawing" | "deciding" | "power_jack" | "power_queen";
-
-//===================
-// Game State
-//===================
 export default class GameState {
   deck: Deck = new Deck();
   discardPile: Card[] = [];
