@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node --watch --env-file=.env server.js",
     "tailwind": "pnx @tailwindcss/cli -i ./public/input.css -o ./public/output.css --watch",
-    "test": "node test-logic.js"
+    "test": "vitest --run"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +21,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.0.0",
     "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   }
 }
