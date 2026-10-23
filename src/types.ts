@@ -21,7 +21,7 @@ export type DealCardResult = Readonly<{
 
 export type Player = Readonly<{
   seat: number;
-  hand: Card[];
+  hand: readonly Card[];
   drawnCard: Card | null;
   score: number;
   isReady: boolean;
