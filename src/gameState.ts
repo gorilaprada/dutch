@@ -1,16 +1,17 @@
 import { type Player, type GameState, type GameResult} from "./types.ts";
 import { buildDeck, shuffleDrawPile, dealCards } from "./deck.ts";
-import { initPlayer } from "./player.ts";
+import { initPlayer, ready } from "./player.ts";
+import { nextTurn } from "./moves.ts";
 import { ok, fail } from "./result.ts";
 
-export function initGameState(): GameState {
-  const deck = shuffleDrawPile(buildDeck(), Math.random);
+export function initGameState(random: () => number = Math.random): GameState {
+  const deck = shuffleDrawPile(buildDeck(), random);
   const gameState: GameState = {
     deck,
     players: new Map(),
     turnIndex: 0,
     fromDiscard: false,
-    phase: "drawing",
+    phase: "lobby",
     canStack: true,
     maxPlayers: 4,
     peek: null,
@@ -36,7 +37,7 @@ export function addPlayer(state: GameState): GameResult{
 }
 
 
-export function dealCardsStart(state: GameState, random: () => number = Math.random): GameResult{
+export function dealCardst(state: GameState, random: () => number = Math.random): GameResult{
   let players = new Map<number, Player>();
   let deck = state.deck;
   for (const [seat, player] of state.players) {
@@ -73,6 +74,43 @@ export function endPeek(state: GameState): GameResult {
   return ok(newState);
 }
 
+export function setPlayerReady(state: GameState, seat: number): GameResult {
+  const player = state.players.get(seat);
+
+  // Checks
+  if (state.phase !== "lobby") return fail("Game has started");
+  if (!player) return fail("Player not found");
+
+  const newPlayer = ready(player);
+  const newPlayers = new Map(state.players);
+  newPlayers.set(seat, newPlayer);
+
+  const newState: GameState = {
+    ...state,
+    players: newPlayers,
+  };
+
+  return ok(newState);
+}
+
+export function startGame(state: GameState): GameResult {
+  if (state.phase !== "lobby") return fail("Game already started");
+
+  for (const [_, player] of state.players) {
+    if (!player.isReady) {
+      return fail("Not everyone is ready");
+    }
+  }
+
+  const newState: GameState = {
+    ...state,
+    phase: "memorizing",
+  };
+
+  return ok(newState);
+}
+
+
 // TODO: Implement applyMove
 
 // ========= Helper functions =============
@@ -85,6 +123,3 @@ function findFreeSeat(state: GameState): number | null {
   return null;
 }
 
-export function nextTurn(state: GameState): number {
-  return (state.turnIndex + 1) % state.players.size;
-}

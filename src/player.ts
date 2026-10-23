@@ -1,4 +1,3 @@
-import { drawCard } from "./deck.ts";
 import type { Player, Card } from "./types.ts";
 
 const STARTING_SCORE = 50;
@@ -10,7 +9,7 @@ export function initPlayer(seat: number): Player {
     drawnCard: null,
     score: STARTING_SCORE,
     isReady: false,
-  }
+  };
 }
 
 export function addCards(player: Player, cards: readonly Card[]): Player {
@@ -26,7 +25,7 @@ export function removeCard(player: Player, handIndex: number): Player {
   return {
     ...player,
     hand: newHand,
-  }
+  };
 }
 
 export function switchDrawnToHand(player: Player, handIndex: number): Player {
@@ -39,7 +38,7 @@ export function switchDrawnToHand(player: Player, handIndex: number): Player {
   return {
     ...player,
     hand: newHand,
-  }
+  };
 }
 
 export function addDrawnCard(player: Player, card: Card): Player {
@@ -57,5 +56,14 @@ export function removeDrawnCard(player: Player): Player {
   return {
     ...player,
     drawnCard: null,
-  }
+  };
+}
+
+export function ready(player: Player): Player {
+  if (player.isReady) return player;
+
+  return {
+    ...player,
+    isReady: true,
+  };
 }

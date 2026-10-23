@@ -1,7 +1,6 @@
 import type { GameState, GameResult, Card, Phase } from "./types.ts";
 import { ok, fail } from "./result.ts";
 import { drawCard, addToDiscardPile } from "./deck.ts";
-import { nextTurn } from "./gameState.ts";
 import { 
   addDrawnCard,
   addCards,
@@ -215,6 +214,11 @@ export function queenPower(
   return ok(newState);
 }
 
+// TODO: dutch()
+// export function dutch(state: GameState, seat: number): GameResult {
+//
+// }
+
 // ================ Helper functions ==========================
 function phaseAfterCard(card: Card): Phase {
   switch (card.value) { 
@@ -222,4 +226,8 @@ function phaseAfterCard(card: Card): Phase {
     case 12: return "power_queen";
     default: return "drawing";
   }
+}
+
+export function nextTurn(state: GameState): number {
+  return (state.turnIndex + 1) % state.players.size;
 }

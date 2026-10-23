@@ -19,15 +19,15 @@ export type DealCardResult = Readonly<{
   deck: Deck;
 }>;
 
-export type Player = {
+export type Player = Readonly<{
   seat: number;
   hand: Card[];
   drawnCard: Card | null;
   score: number;
   isReady: boolean;
-}
+}>;
 
-export type Phase = "memorizing" | "drawing" | "deciding" | "power_jack" | "power_queen" | "peeking";
+export type Phase = "lobby" | "memorizing" | "drawing" | "deciding" | "power_jack" | "power_queen" | "peeking";
 
 export type Peek = {
   peeker: number;
