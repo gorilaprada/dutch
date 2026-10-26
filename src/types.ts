@@ -27,12 +27,24 @@ export type Player = Readonly<{
   isReady: boolean;
 }>;
 
-export type Phase = "lobby" | "memorizing" | "drawing" | "deciding" | "power_jack" | "power_queen" | "peeking";
+export type Phase =
+  | "lobby"
+  | "memorizing"
+  | "drawing"
+  | "deciding"
+  | "power_jack"
+  | "power_queen"
+  | "peeking"
+  | "ended";
 
 export type Peek = {
   peeker: number;
   targetSeat: number;
   handIndex: number;
+};
+
+export type Dutch = {
+  seat: number;
 };
 
 export type GameState = Readonly<{
@@ -44,6 +56,7 @@ export type GameState = Readonly<{
   canStack: boolean;
   maxPlayers: number;
   peek: Peek | null;
+  dutch: Dutch | null;
 }>;
 
 export type GameResult = 

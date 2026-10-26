@@ -65,12 +65,14 @@ export function switchCards(state: GameState, seat: number, handIndex: number): 
     ...state,
     deck: newDeck,
     players: newPlayers,
-    phase: newPhase,
-    turnIndex: newPhase === "drawing" ? nextTurn(state)  : state.turnIndex,
     canStack: true,
   }
 
-  return ok(newState);
+  return ok(
+    newPhase === "drawing" ?
+      finishTurn(newState) :
+      {...newState, phase: newPhase}
+  );
 }
 
 export function discardCard(state: GameState, seat: number): GameResult {
@@ -94,19 +96,21 @@ export function discardCard(state: GameState, seat: number): GameResult {
     ...state,
     deck: newDeck,
     players: newPlayers,
-    phase: newPhase,
-    turnIndex: newPhase !== "drawing" ? state.turnIndex : nextTurn(state),
     canStack: true,
   };
 
-  return ok(newState);
+  return ok(
+    newPhase === "drawing" ?
+      finishTurn(newState) :
+      {...newState, phase: newPhase}
+  );
 }
 
 export function stack(state: GameState, seat: number, handIndex: number, random: () => number): GameResult {
   const player = state.players.get(seat);
 
   // Move checks
-  if (!state.canStack || state.phase === "memorizing") return fail("Cannot stack right now");
+  if (!state.canStack || state.phase === "memorizing" || state.phase === "ended") return fail("Cannot stack right now");
   if (!player) return fail("Player not found");
 
   // Logic
@@ -175,12 +179,10 @@ export function jackPower(
   newPlayers.set(seat1, {...p1, hand: h1});
   newPlayers.set(seat2, {...p2, hand: h2});
 
-  const newState: GameState = {
+  const newState: GameState = finishTurn({
     ...state,
     players: newPlayers,
-    phase: "drawing",
-    turnIndex: nextTurn(state),
-  };
+  });
 
   return ok(newState);
 }
@@ -214,12 +216,33 @@ export function queenPower(
   return ok(newState);
 }
 
-// TODO: dutch()
-// export function dutch(state: GameState, seat: number): GameResult {
-//
-// }
+export function dutch(state: GameState, seat: number): GameResult {
+  const player = state.players.get(seat);
+
+  // Checks
+  if (seat !== state.turnIndex) return fail("Not your turn");
+  if (state.phase !== "drawing") return fail("Cannot call dutch at this moment");
+  if (state.dutch) return fail("Dutch already called");
+  if (!player) return fail("Player not found");
+
+  // Logic
+  const newState: GameState = finishTurn({
+    ...state,
+    dutch: { seat },
+  });
+
+  return ok(newState);
+}
 
 // ================ Helper functions ==========================
+export function finishTurn(state: GameState): GameState {
+  const next = nextTurn(state);
+  return { 
+    ...state,
+    turnIndex: next,
+    phase: next === state.dutch?.seat ? "ended" : "drawing"};
+}
+
 function phaseAfterCard(card: Card): Phase {
   switch (card.value) { 
     case 11: return "power_jack";
@@ -228,6 +251,6 @@ function phaseAfterCard(card: Card): Phase {
   }
 }
 
-export function nextTurn(state: GameState): number {
+function nextTurn(state: GameState): number {
   return (state.turnIndex + 1) % state.players.size;
 }

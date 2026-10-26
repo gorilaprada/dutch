@@ -1,7 +1,7 @@
 import { type Player, type GameState, type GameResult} from "./types.ts";
 import { buildDeck, shuffleDrawPile, dealCards } from "./deck.ts";
 import { initPlayer, ready } from "./player.ts";
-import { nextTurn } from "./moves.ts";
+import { finishTurn } from "./moves.ts";
 import { ok, fail } from "./result.ts";
 
 export function initGameState(random: () => number = Math.random): GameState {
@@ -15,6 +15,7 @@ export function initGameState(random: () => number = Math.random): GameState {
     canStack: true,
     maxPlayers: 4,
     peek: null,
+    dutch: null,
   };
 
   return gameState;
@@ -89,16 +90,14 @@ export function endMemorizing(state: GameState): GameResult {
 
 export function endPeek(state: GameState): GameResult {
   if (state.phase !== "peeking") return fail("No peeking right now");
-  const newState: GameState = {
+  const newState: GameState = finishTurn({
     ...state,
-    phase: "drawing",
     peek: null,
-    turnIndex: nextTurn(state)
-  };
+  });
 
   return ok(newState);
 }
-
+// TODO: Implement countPoints
 // TODO: Implement applyMove
 
 // ========= Helper functions =============
