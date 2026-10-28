@@ -110,7 +110,12 @@ export function stack(state: GameState, seat: number, handIndex: number, random:
   const player = state.players.get(seat);
 
   // Move checks
-  if (!state.canStack || state.phase === "memorizing" || state.phase === "ended") return fail("Cannot stack right now");
+  if (
+    !state.canStack
+    || state.phase === "memorizing"
+    || state.phase === "scoring"
+    || state.phase === "finished"
+  ) return fail("Cannot stack right now");
   if (!player) return fail("Player not found");
 
   // Logic
@@ -240,7 +245,7 @@ export function finishTurn(state: GameState): GameState {
   return { 
     ...state,
     turnIndex: next,
-    phase: next === state.dutch?.seat ? "ended" : "drawing"};
+    phase: next === state.dutch?.seat ? "scoring" : "drawing"};
 }
 
 function phaseAfterCard(card: Card): Phase {
@@ -252,5 +257,7 @@ function phaseAfterCard(card: Card): Phase {
 }
 
 function nextTurn(state: GameState): number {
-  return (state.turnIndex + 1) % state.players.size;
+  const seats = [...state.players.keys()].sort((a, b) => a - b);
+  const i = seats.indexOf(state.turnIndex);
+  return seats[(i + 1) % seats.length]!;
 }

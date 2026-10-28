@@ -1,6 +1,6 @@
 import { type Player, type GameState, type GameResult} from "./types.ts";
 import { buildDeck, shuffleDrawPile, dealCards } from "./deck.ts";
-import { initPlayer, ready } from "./player.ts";
+import { initPlayer, ready, score} from "./player.ts";
 import { finishTurn } from "./moves.ts";
 import { ok, fail } from "./result.ts";
 
@@ -97,7 +97,37 @@ export function endPeek(state: GameState): GameResult {
 
   return ok(newState);
 }
-// TODO: Implement countPoints
+
+export function countPoints(state: GameState, random: () => number): GameResult {
+  if (state.phase !== "scoring") return fail("Game has not ended");
+
+  const scored = [...state.players.values()]
+    .map(player => ({
+      ...score(player),
+      hand: [],
+      drawnCard: null,
+      isReady: false,
+    }));
+
+  let survivors = scored.filter(player => player.score > 0);
+  if (survivors.length === 0) {
+    const best = Math.max(...scored.map(player => player.score));
+    survivors = scored.filter(player => player.score === best);
+  }
+
+  const players = new Map(survivors.map(player => [player.seat, player]));
+  const finished = survivors.length < 2 || survivors.every(player => player.score <= 0);
+ 
+  const newState: GameState = {
+    ...initGameState(random),
+    players,
+    phase: finished ? "finished" : "lobby",
+    turnIndex: Math.min(...players.keys()),
+  };
+
+  return ok(newState);
+}
+
 // TODO: Implement applyMove
 
 // ========= Helper functions =============

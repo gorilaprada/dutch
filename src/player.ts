@@ -67,3 +67,21 @@ export function ready(player: Player): Player {
     isReady: true,
   };
 }
+
+export function score(player: Player): Player {
+  const value = player.hand.reduce(
+    (acc, card) =>
+      acc + cardPoints(card),
+    0);
+
+  return {
+    ...player,
+    score: player.score - value,
+  };
+}
+
+//=============== Helper functions ===================
+function cardPoints(card: Card): number {
+  if (card.value === 13 && (card.suit === "♤" || card.suit === "♧")) return 0;
+  return card.value;
+}

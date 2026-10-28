@@ -35,7 +35,8 @@ export type Phase =
   | "power_jack"
   | "power_queen"
   | "peeking"
-  | "ended";
+  | "scoring"
+  | "finished";
 
 export type Peek = {
   peeker: number;
