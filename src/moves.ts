@@ -12,7 +12,7 @@ import {
 export function drawFrom(state: GameState, seat: number, drawFrom: "drawPile" | "discardPile", random: () => number): GameResult {
   const player = state.players.get(seat);
 
-  // Move checks
+  // Checks
   if (seat !== state.turnIndex) return fail("Not your turn");
   if (state.phase !== "drawing") return fail("Not drawing right now");
   if (drawFrom === "discardPile" && state.deck.discardPile.length === 0) return fail("Discard Pile is empty");
@@ -42,7 +42,7 @@ export function drawFrom(state: GameState, seat: number, drawFrom: "drawPile" | 
 export function switchCards(state: GameState, seat: number, handIndex: number): GameResult {
   const player = state.players.get(seat);
 
-  // Move checks
+  // Checks
   if (seat !== state.turnIndex) return fail("Not your turn");
   if (state.phase !== "deciding") return fail("Not deciding right now");
   if (!player) return fail("Player not found");
@@ -78,7 +78,7 @@ export function switchCards(state: GameState, seat: number, handIndex: number): 
 export function discardCard(state: GameState, seat: number): GameResult {
   const player = state.players.get(seat);
 
-  // Move checks
+  // Checks
   if (seat !== state.turnIndex) return fail("Not your turn");
   if (state.phase !== "deciding") return fail("Not deciding right now");
   if (!player) return fail("Player not found");
@@ -109,7 +109,7 @@ export function discardCard(state: GameState, seat: number): GameResult {
 export function stack(state: GameState, seat: number, handIndex: number, random: () => number): GameResult {
   const player = state.players.get(seat);
 
-  // Move checks
+  // Checks
   if (
     !state.canStack
     || state.phase === "memorizing"
@@ -146,6 +146,18 @@ export function stack(state: GameState, seat: number, handIndex: number, random:
   const newPlayer = removeCard(player, handIndex);
   newPlayers.set(seat, newPlayer);
 
+  // Start counting points if onew player has zero cards
+  if (newPlayer.hand.length === 0) {
+    return ok({
+      ...state,
+      deck: newDeck,
+      players: newPlayers,
+      canStack: false,
+      peek: null,
+      phase: "scoring",
+    })
+  }
+
   const newState: GameState = {
     ...state,
     deck: newDeck,
@@ -166,7 +178,7 @@ export function jackPower(
 ): GameResult {
   const p1 = state.players.get(seat1), p2 = state.players.get(seat2);
 
-  // Move checks
+  // Checks
   if (state.phase !== "power_jack" || state.turnIndex !== powerOwnerSeat) return fail("Forbidden move");
   if (seat1 === seat2) return fail("Cannot switch cards from the same hand");
   if (!p1 || !p2) return fail("Players not found");
@@ -201,7 +213,7 @@ export function queenPower(
   const player = state.players.get(seat);
   const target = state.players.get(targetSeat);
 
-  // Move checks
+  // Checks
   if (seat !== state.turnIndex) return fail("Forbidden move");
   if (state.phase !== "power_queen") return fail("No queen power to execute");
   if (!player) return fail("Player not found");

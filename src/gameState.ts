@@ -69,8 +69,11 @@ export function startGame(state: GameState, random: () => number): GameResult {
     }
   }
 
+
+  const dealCardsState = dealCardsStart(state, random);
+  if (dealCardsState === null) return fail("Could not deal cards");
   const newState: GameState = {
-    ...dealCardsStart(state, random),
+    ...dealCardsState,
     phase: "memorizing",
   };
 
@@ -131,13 +134,13 @@ export function countPoints(state: GameState, random: () => number): GameResult 
 // TODO: Implement applyMove
 
 // ========= Helper functions =============
-function dealCardsStart(state: GameState, random: () => number): GameState {
+function dealCardsStart(state: GameState, random: () => number): GameState | null {
   let players = new Map<number, Player>();
   let deck = state.deck;
   for (const [seat, player] of state.players) {
     const result = dealCards(deck, 4, random);
     if (result === null) {
-      throw new Error("Not enough cards to deal");
+      return null
     };
     deck = result.deck;
     players.set(seat, {
