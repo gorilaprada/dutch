@@ -1,7 +1,5 @@
 export const SUITS = [ "♤" , "♡" , "♢" , "♧" ] as const;
 export type Suit = (typeof SUITS)[number];
-export const PLAYERS = [0, 1, 2, 3] as const;
-export type Players= (typeof PLAYERS)[number];
 
 export type Card = Readonly<{
   id: string;

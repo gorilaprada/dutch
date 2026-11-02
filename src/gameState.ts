@@ -1,8 +1,10 @@
-import { type Player, type GameState, type GameResult} from "./types.ts";
+import type { Player, GameState, GameResult, Phase } from "./types.ts";
 import { buildDeck, shuffleDrawPile, dealCards } from "./deck.ts";
 import { initPlayer, ready, score} from "./player.ts";
-import { finishTurn } from "./moves.ts";
+import { finishTurn, nextTurn } from "./moves.ts";
 import { ok, fail } from "./result.ts";
+
+const TURN_PHASES: Phase[] = ["drawing", "deciding", "power_jack", "power_queen", "peeking"];
 
 export function initGameState(random: () => number = Math.random): GameState {
   const deck = shuffleDrawPile(buildDeck(), random);
@@ -40,6 +42,28 @@ export function addPlayer(state: GameState): GameResult{
   return ok(newState);
 }
 
+export function removePlayer(state: GameState, seat: number): GameResult {
+  if (!state.players.has(seat)) return fail("Player does not exist");
+  let baseState: GameState = state;
+  if (state.turnIndex === seat) {
+    baseState = TURN_PHASES.includes(state.phase)
+      ? finishTurn(state)
+      : {...state, turnIndex: nextTurn(state)};
+  }
+
+  const players = new Map(baseState.players);
+  players.delete(seat);
+  const inRound = baseState.phase !== "lobby" && baseState.phase !== "finished";
+
+  return ok({
+    ...baseState,
+    players,
+    dutch: baseState.dutch?.seat === seat ? null : baseState.dutch,
+    peek: baseState.peek?.peeker === seat || baseState.peek?.targetSeat === seat ? null : baseState.peek,
+    phase: inRound && players.size < 2 ? "finished" : baseState.phase,
+  })
+}
+
 export function setPlayerReady(state: GameState, seat: number): GameResult {
   const player = state.players.get(seat);
 
@@ -67,14 +91,15 @@ export function startGame(state: GameState, random: () => number): GameResult {
     if (!player.isReady) {
       return fail("Not everyone is ready");
     }
-  }
 
+  }
 
   const dealCardsState = dealCardsStart(state, random);
   if (dealCardsState === null) return fail("Could not deal cards");
   const newState: GameState = {
     ...dealCardsState,
     phase: "memorizing",
+    turnIndex: Math.min(...dealCardsState.players.keys()),
   };
 
   return ok(newState);
@@ -131,6 +156,7 @@ export function countPoints(state: GameState, random: () => number): GameResult 
   return ok(newState);
 }
 
+// TODO: viewFor
 // TODO: Implement applyMove
 
 // ========= Helper functions =============

@@ -115,6 +115,7 @@ export function stack(state: GameState, seat: number, handIndex: number, random:
     || state.phase === "memorizing"
     || state.phase === "scoring"
     || state.phase === "finished"
+    || state.phase === "peeking"
   ) return fail("Cannot stack right now");
   if (!player) return fail("Player not found");
 
@@ -260,6 +261,12 @@ export function finishTurn(state: GameState): GameState {
     phase: next === state.dutch?.seat ? "scoring" : "drawing"};
 }
 
+export function nextTurn(state: GameState): number {
+  const seats = [...state.players.keys()].sort((a, b) => a - b);
+  const i = seats.indexOf(state.turnIndex);
+  return seats[(i + 1) % seats.length]!;
+}
+
 function phaseAfterCard(card: Card): Phase {
   switch (card.value) { 
     case 11: return "power_jack";
@@ -268,8 +275,3 @@ function phaseAfterCard(card: Card): Phase {
   }
 }
 
-function nextTurn(state: GameState): number {
-  const seats = [...state.players.keys()].sort((a, b) => a - b);
-  const i = seats.indexOf(state.turnIndex);
-  return seats[(i + 1) % seats.length]!;
-}
