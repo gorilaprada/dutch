@@ -36,6 +36,22 @@ export type Phase =
   | "scoring"
   | "finished";
 
+ export type Move =
+  | { type: "addPlayer" }
+  | { type: "ready"; seat: number }
+  | { type: "start" }
+  | { type: "endMemorizing" }
+  | { type: "draw"; seat: number; from: "drawPile" | "discardPile" }
+  | { type: "switch"; seat: number; handIndex: number }
+  | { type: "discard"; seat: number }
+  | { type: "stack"; seat: number; handIndex: number }
+  | { type: "jack"; seat: number; seat1: number; seat2: number; i1: number; i2: number }
+  | { type: "queen"; seat: number; targetSeat: number; handIndex: number }
+  | { type: "endPeek" }
+  | { type: "dutch"; seat: number }
+  | { type: "countPoints" }
+  | { type: "leave"; seat: number };
+
 export type Peek = {
   peeker: number;
   targetSeat: number;
