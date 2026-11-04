@@ -156,55 +156,8 @@ export function countPoints(state: GameState, random: () => number): GameResult 
   return ok(newState);
 }
 
-// TODO: Implement applyMove
-export function applyMove(state: GameState, move: Move, random: () => number): GameResult {
-  return ok(state);
-}
-
-export function parseMove(input: unknown, seat: number): Move | null {
-  if (typeof input !== "object" || input === null || !("type" in input) || typeof input.type !== "string") return null;
-  const move = input as Record<string, unknown>;
- 
-  switch(move.type) {
-    case "addPlayer":
-      return { type: "addPlayer" };
-    case "ready":
-    case "discard":
-    case "dutch":
-    case "leave":
-      return { type: move.type, seat};
-    case "start":
-      return { type: "start" };
-    case "draw":
-      if (move.from !== "drawPile" && move.from !== "discardPile") return null;
-      return { type: move.type, seat, from: move.from };
-    case "switch":
-    case "stack":
-      if (!isIndex(move.handIndex)) return null;
-      return {type: move.type, seat, handIndex: move.handIndex };
-    case "jack": {
-      const { seat1, seat2, i1, i2 } = move;
-      if (!isIndex(seat1) || !isIndex(seat2) || !isIndex(i1) || !isIndex(i2)) return null; 
-      return {type: "jack", seat, seat1, seat2, i1, i2 };
-    }
-    case "queen": {
-      const { targetSeat, handIndex } = move;
-      if (!isIndex(targetSeat) || !isIndex(handIndex)) return null;
-      return { type: "queen", seat, targetSeat, handIndex };
-    }
-    default:
-      return null;
-  }
-}
-
-// TODO: viewFor
 
 // ========= Helper functions =============
-
-
-function isIndex(x: unknown): x is number {
-  return Number.isInteger(x) && (x as number) >= 0;
-}
 
 function dealCardsStart(state: GameState, random: () => number): GameState | null {
   let players = new Map<number, Player>();
@@ -238,5 +191,3 @@ function findFreeSeat(state: GameState): number | null {
   };
   return null;
 }
-
-
