@@ -7,12 +7,14 @@ export type Timings = Readonly<{
   memorizeMs: number;
   peekMs: number;
   scoringMs: number; // how long the revealed hands stay on screen
+  reconnectMs: number; // how long a disconnected player's seat is held
 }>;
 
 export const DEFAULT_TIMINGS: Timings = {
   memorizeMs: 5000,
   peekMs: 3000,
   scoringMs: 5000,
+  reconnectMs: 30_000,
 };
 
 export type RoomTimer = {
@@ -22,7 +24,7 @@ export type RoomTimer = {
 };
 
 // Phases that end on their own, and the server move that ends them
-const TIMED: Partial<Record<Phase, { ms: keyof Timings; move: Move }>> = {
+const TIMED: Partial<Record<Phase, { ms: "memorizeMs" | "peekMs" | "scoringMs"; move: Move }>> = {
   memorizing: { ms: "memorizeMs", move: { type: "endMemorizing" } },
   peeking: { ms: "peekMs", move: { type: "endPeek" } },
   scoring: { ms: "scoringMs", move: { type: "countPoints" } },

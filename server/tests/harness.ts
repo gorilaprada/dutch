@@ -56,11 +56,11 @@ export async function startedGame(client: () => Promise<Client>) {
 
   const anaJoined = next(ana, "roomJoined");
   ana.emit("createRoom", { name: "Ana" });
-  const { code } = await anaJoined;
+  const { code, token: anaToken } = await anaJoined;
 
   const bobJoined = next(bob, "roomJoined");
   bob.emit("joinRoom", { code, name: "Bob" });
-  await bobJoined;
+  const { token: bobToken } = await bobJoined;
 
   const anaMemorizing = viewWhere(ana, v => v.view.phase === "memorizing");
   const bobMemorizing = viewWhere(bob, v => v.view.phase === "memorizing");
@@ -70,5 +70,13 @@ export async function startedGame(client: () => Promise<Client>) {
   await bothReady;
   ana.emit("move", { type: "start" });
 
-  return { ana, bob, code, anaView: await anaMemorizing, bobView: await bobMemorizing };
+  return {
+    ana,
+    bob,
+    code,
+    anaToken,
+    bobToken,
+    anaView: await anaMemorizing,
+    bobView: await bobMemorizing,
+  };
 }

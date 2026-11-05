@@ -90,7 +90,7 @@ describe("timers", () => {
     await peeking;
 
     const finished = viewWhere(bob, v => v.view.phase === "finished");
-    ana.disconnect();
+    ana.emit("move", { type: "leave" });
     await finished;
 
     expect(room.timer).toBeNull();
@@ -103,8 +103,8 @@ describe("timers", () => {
     const room = roomOf(code);
     expect(room.timer).not.toBeNull();
 
-    ana.disconnect();
-    bob.disconnect();
+    ana.emit("move", { type: "leave" });
+    bob.emit("move", { type: "leave" });
     await wait(MS / 2);
     expect(harness.server.rooms.has(code)).toBe(false);
     expect(room.timer).toBeNull();
