@@ -59,6 +59,6 @@ describe("Lobby", () => {
     const { fire } = renderApp();
     enterRoom(fire, roomView());
     fire("view", roomView({ phase: "memorizing", actionSeq: 5 }));
-    expect(screen.getByText("Table")).toBeInTheDocument();
+    expect(screen.getByText("Memorize your two cards.")).toBeInTheDocument();
   });
 });

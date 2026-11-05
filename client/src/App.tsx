@@ -2,7 +2,7 @@ import { NoticeStack } from "./components/NoticeStack.tsx";
 import { useGame } from "./game/useGame.ts";
 import { Landing } from "./screens/Landing.tsx";
 import { Lobby } from "./screens/Lobby.tsx";
-import { TablePlaceholder } from "./screens/TablePlaceholder.tsx";
+import { Table } from "./screens/Table.tsx";
 
 export function App() {
   const { state, actions } = useGame();
@@ -16,7 +16,7 @@ export function App() {
           ? <Waiting text="Joining the table…" />
           : roomView.view.phase === "lobby"
             ? <Lobby roomView={roomView} />
-            : <TablePlaceholder roomView={roomView} />}
+            : <Table roomView={roomView} />}
 
       <NoticeStack notices={state.notices} onDismiss={actions.dismissNotice} />
     </div>

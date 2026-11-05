@@ -850,3 +850,17 @@ button.card-clickable:hover {
 .notice-info {
   border-color: var(--cyan-400);
 }
+
+/* ---------- Table additions (React client) ---------- */
+
+/* What just happened, in words, until the animations arrive */
+.last-move {
+  margin: 0;
+  padding: var(--space-2) var(--space-6);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  color: var(--cream-100);
+  opacity: 0.85;
+}

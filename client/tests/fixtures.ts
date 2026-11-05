@@ -1,4 +1,4 @@
-import type { RoomView, SeatView } from "../src/game/protocol.ts";
+import type { Card, RoomView, SeatView } from "../src/game/protocol.ts";
 
 export function seat(seatNumber: number, overrides: Partial<SeatView> = {}): SeatView {
   return {
@@ -45,6 +45,40 @@ export function roomView(overrides: {
       dutch: null,
       lastAction: null,
       actionSeq: overrides.actionSeq ?? 1,
+    },
+  };
+}
+
+export function card(suit: Card["suit"], value: number): Card {
+  return { id: `${suit}_${value}`, suit, value };
+}
+
+// A game in progress: Ana (seat 0, you) and Bob (seat 1), 4 face-down cards each
+export function tableView(overrides: {
+  you?: number | null;
+  phase?: RoomView["view"]["phase"];
+  turnIndex?: number;
+  players?: SeatView[];
+  view?: Partial<RoomView["view"]>;
+  deadline?: number | null;
+} = {}): RoomView {
+  const base = roomView({
+    you: overrides.you,
+    phase: overrides.phase ?? "drawing",
+    players: overrides.players ?? [
+      seat(0, { hand: [null, null, null, null] }),
+      seat(1, { hand: [null, null, null, null] }),
+    ],
+  });
+  return {
+    ...base,
+    deadline: overrides.deadline ?? null,
+    view: {
+      ...base.view,
+      turnIndex: overrides.turnIndex ?? 0,
+      topDiscard: card("♡", 5),
+      drawPileCount: 43,
+      ...overrides.view,
     },
   };
 }
