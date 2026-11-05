@@ -94,6 +94,43 @@ export type GameState = Readonly<{
   actionSeq: number;
 }>;
 
-export type GameResult = 
+// ========= Views (what one player is allowed to see) =============
+export type SeatView = Readonly<{
+  seat: number;
+  hand: readonly (Card | null)[]; // null = face down
+  hasDrawnCard: boolean;
+  drawnCard: Card | null; // only filled for the viewer
+  score: number;
+  isReady: boolean;
+}>;
+
+export type PeekView = Readonly<{
+  peeker: number;
+  targetSeat: number;
+  handIndex: number;
+  card: Card | null; // only filled for the peeker
+}>;
+
+export type PlayerView = Readonly<{
+  you: number;
+  players: readonly SeatView[]; // sorted by seat, a Map does not survive JSON
+  drawPileCount: number;
+  topDiscard: Card | null;
+  turnIndex: number;
+  phase: Phase;
+  fromDiscard: boolean;
+  canStack: boolean;
+  maxPlayers: number;
+  peek: PeekView | null;
+  dutch: Dutch | null;
+  lastAction: Action | null;
+  actionSeq: number;
+}>;
+
+export type ViewResult =
+  | { ok: false, error: string }
+  | { ok: true, view: PlayerView };
+
+export type GameResult =
   { ok: false, error: string } |
   { ok: true, state: GameState };

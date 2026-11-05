@@ -50,8 +50,11 @@ export function applyMove(state: GameState, move: Move, random: () => number): G
       return endPeek(state);
     case "countPoints":
       return countPoints(state, random);
-    default:
-      return fail(`Could not perform move: ${JSON.stringify(move)}`);
+    default: {
+      // Compile error here means a Move variant has no case above
+      const unhandled: never = move;
+      return fail(`Could not perform move: ${JSON.stringify(unhandled)}`);
+    }
   }
 }
 
@@ -91,10 +94,18 @@ export function parseMove(input: unknown, seat: number): Move | null {
   }
 }
 
-// TODO: viewFor
-
+export { viewFor } from "./view.ts";
 export { initGameState } from "./gameState.ts";
-export type { GameState, GameResult, Move } from "./types.ts";
+export type {
+  GameState,
+  GameResult,
+  Move,
+  Action,
+  PlayerView,
+  SeatView,
+  PeekView,
+  ViewResult,
+} from "./types.ts";
 
 // ======= Helper Functions ==========
 function isIndex(x: unknown): x is number {

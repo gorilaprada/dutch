@@ -18,40 +18,8 @@ import {
   queenPower,
   dutch,
 } from "../src/moves.ts";
-import type { Card, GameResult, GameState, Suit } from "../src/types.ts";
-
-// ========= Helpers =============
-const random = () => 0;
-
-function card(suit: Suit, value: number): Card {
-  return { id: `${suit}_${value}`, suit, value };
-}
-
-function unwrap(result: GameResult): GameState {
-  if (!result.ok) throw new Error(result.error);
-  return result.state;
-}
-
-function setHand(state: GameState, seat: number, hand: Card[]): GameState {
-  const players = new Map(state.players);
-  players.set(seat, { ...players.get(seat)!, hand });
-  return { ...state, players };
-}
-
-function setDiscard(state: GameState, discardPile: Card[]): GameState {
-  return { ...state, deck: { ...state.deck, discardPile } };
-}
-
-// Two players, cards dealt, memorizing over, seat 0 to draw
-function playing(): GameState {
-  let state = initGameState(random);
-  state = unwrap(addPlayer(state));
-  state = unwrap(addPlayer(state));
-  state = unwrap(setPlayerReady(state, 0));
-  state = unwrap(setPlayerReady(state, 1));
-  state = unwrap(startGame(state, random));
-  return unwrap(endMemorizing(state));
-}
+import type { GameState } from "../src/types.ts";
+import { random, card, unwrap, setHand, setDiscard, playing } from "./helpers.ts";
 
 describe("lastAction", () => {
   let state: GameState;
