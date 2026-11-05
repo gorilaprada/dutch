@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Server, Socket } from "socket.io";
-import { applyMove, parseMove, viewFor } from "../../src/entrypoint.ts";
+import { applyMove, initGameState, parseMove, viewFor, type GameState } from "../../src/entrypoint.ts";
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -30,8 +30,7 @@ export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void 
     const name = parseName(payload);
     if (name === null) return socket.emit("roomError", "Invalid name");
 
-    const room = createRoom(rooms);
-    if (!joinRoom(ctx, socket, room, name)) rooms.delete(room.code);
+    joinRoom(ctx, socket, createRoom(rooms), name);
   });
 
   socket.on("joinRoom", payload => {
@@ -72,8 +71,16 @@ export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void 
     const session = sessionOf(room, socket);
     if (!room || !session) return socket.emit("moveError", "Join or create a room first");
 
+    // Watchers and eliminated players can only leave
+    if (!isPlaying(room, session)) {
+      if (!isObj(payload) || payload.type !== "leave") return socket.emit("moveError", "Spectators cannot play");
+      detach(socket, room);
+      endSession(ctx, room, session);
+      return commit(ctx, room);
+    }
+
     // Seat comes from the session, never from the payload
-    const move = parseMove(payload, session.seat);
+    const move = parseMove(payload, session.seat!);
     if (!move) return socket.emit("moveError", "Invalid move");
     // Joining goes through createRoom / joinRoom so the server can store the name
     if (move.type === "addPlayer") return socket.emit("moveError", "Use joinRoom to join");
@@ -89,16 +96,45 @@ export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void 
     commit(ctx, room);
   });
 
+  // A watcher takes a free seat before the game starts
+  socket.on("sit", () => {
+    const room = roomOf(rooms, socket);
+    const session = sessionOf(room, socket);
+    if (!room || !session) return socket.emit("roomError", "Join or create a room first");
+    if (session.seat !== null) return socket.emit("roomError", "Already seated");
+    if (room.state.phase !== "lobby") return socket.emit("roomError", "Can only sit in the lobby");
+
+    const seated = seatPlayer(room.state);
+    if (!seated) return socket.emit("roomError", "Lobby full");
+
+    room.state = seated.state;
+    session.seat = seated.seat;
+    attach(socket, room, session);
+    commit(ctx, room);
+  });
+
+  // Anyone in the room resets a finished game to a lobby with everyone connected
+  socket.on("rematch", () => {
+    const room = roomOf(rooms, socket);
+    const session = sessionOf(room, socket);
+    if (!room || !session) return socket.emit("roomError", "Join or create a room first");
+    if (room.state.phase !== "finished") return socket.emit("roomError", "Game is not finished");
+
+    rematch(ctx, room);
+  });
+
   socket.on("disconnect", () => {
     const room = roomOf(rooms, socket);
     const session = sessionOf(room, socket);
     // Already detached, e.g. replaced by another tab
     if (!room || !session || session.socketId !== socket.id) return;
 
-    // Seats are only held once a game is running and the player is in it
-    const inGame = room.state.players.has(session.seat);
+    // Seats are only held once a game is running and the player is in it.
+    // Spectators (watchers, eliminated) get no grace
+    const seat = session.seat;
+    const inGame = seat !== null && room.state.players.has(seat);
     if (room.state.phase === "lobby" || !inGame) {
-      if (inGame) leaveGame(room, session.seat);
+      if (inGame) leaveGame(room, seat);
       endSession(ctx, room, session);
       return commit(ctx, room);
     }
@@ -127,11 +163,17 @@ export function commit(ctx: ServerContext, room: Room): void {
 export function broadcast(io: DutchServer, room: Room): void {
   const socketIds = io.sockets.adapter.rooms.get(room.code) ?? new Set<string>();
   const sessions = [...room.sessions.values()];
-  const names = Object.fromEntries(sessions.map(s => [s.seat, s.name]));
-  const connected = Object.fromEntries(sessions.map(s => [s.seat, s.socketId !== null]));
+  const seated = sessions.flatMap(s => s.seat === null ? [] : [{ ...s, seat: s.seat }]);
+
+  const names = Object.fromEntries(seated.map(s => [s.seat, s.name]));
+  const connected = Object.fromEntries(seated.map(s => [s.seat, s.socketId !== null]));
   const graceDeadlines = Object.fromEntries(
-    sessions.flatMap(s => s.grace ? [[s.seat, s.grace.deadline]] : [])
+    seated.flatMap(s => s.grace ? [[s.seat, s.grace.deadline]] : [])
   );
+  const watchers = sessions.filter(s => s.seat === null).map(s => s.name);
+  const eliminated = room.state.phase === "lobby"
+    ? []
+    : seated.filter(s => !room.state.players.has(s.seat)).map(s => s.seat).sort((a, b) => a - b);
   const deadline = room.timer?.deadline ?? null;
 
   for (const id of socketIds) {
@@ -142,7 +184,16 @@ export function broadcast(io: DutchServer, room: Room): void {
     const viewer = seat !== undefined && room.state.players.has(seat) ? seat : null;
     const result = viewFor(room.state, viewer);
     if (result.ok) {
-      socket.emit("view", { code: room.code, names, connected, graceDeadlines, view: result.view, deadline });
+      socket.emit("view", {
+        code: room.code,
+        names,
+        connected,
+        graceDeadlines,
+        watchers,
+        eliminated,
+        view: result.view,
+        deadline,
+      });
     }
   }
 }
@@ -156,31 +207,68 @@ export function clearAllTimers(ctx: ServerContext): void {
 }
 
 // ========= Helper functions =============
-function joinRoom(ctx: ServerContext, socket: DutchSocket, room: Room, name: string): boolean {
-  const result = applyMove(room.state, { type: "addPlayer" }, Math.random);
-  if (!result.ok) {
-    socket.emit("roomError", result.error);
-    return false;
-  }
+// Seats the player if the lobby has room, otherwise they join as a watcher
+function joinRoom(ctx: ServerContext, socket: DutchSocket, room: Room, name: string): void {
+  const seated = room.state.phase === "lobby" ? seatPlayer(room.state) : null;
+  if (seated) room.state = seated.state;
 
-  const action = result.state.lastAction;
-  if (action?.type !== "join") return false;
-  room.state = result.state;
-
-  const session: Session = { token: randomUUID(), seat: action.seat, name, socketId: null, grace: null };
+  const session: Session = {
+    token: randomUUID(),
+    seat: seated?.seat ?? null,
+    name,
+    socketId: null,
+    grace: null,
+  };
   room.sessions.set(session.token, session);
   ctx.tokens.set(session.token, room.code);
 
   attach(socket, room, session);
   commit(ctx, room);
-  return true;
+}
+
+// Fresh lobby: last game's players first (old seat order), then watchers
+// (join order). Up to maxPlayers get a seat, the rest keep watching
+function rematch(ctx: ServerContext, room: Room): void {
+  // A lobby never holds seats, so disconnected sessions lose their spot
+  for (const session of [...room.sessions.values()]) {
+    if (session.socketId === null) endSession(ctx, room, session);
+  }
+
+  const sessions = [...room.sessions.values()];
+  const order = [
+    ...sessions.filter(s => s.seat !== null).sort((a, b) => a.seat! - b.seat!),
+    ...sessions.filter(s => s.seat === null),
+  ];
+
+  // Keep counting actions so clients never see actionSeq go backwards
+  let state: GameState = { ...initGameState(), actionSeq: room.state.actionSeq };
+  for (const session of order) {
+    const seated = seatPlayer(state);
+    session.seat = seated?.seat ?? null;
+    if (seated) state = seated.state;
+  }
+
+  clearTimer(room);
+  room.state = state;
+  for (const session of order) {
+    const socket = session.socketId === null ? undefined : ctx.io.sockets.sockets.get(session.socketId);
+    if (socket) attach(socket, room, session); // tells each socket its new seat
+  }
+  commit(ctx, room);
+}
+
+// Adds a player to the lib's game; null if the lobby is full
+function seatPlayer(state: GameState): { state: GameState; seat: number } | null {
+  const result = applyMove(state, { type: "addPlayer" }, Math.random);
+  if (!result.ok || result.state.lastAction?.type !== "join") return null;
+  return { state: result.state, seat: result.state.lastAction.seat };
 }
 
 // Binds a socket to a session's seat and tells it so (with its token)
 function attach(socket: DutchSocket, room: Room, session: Session): void {
   session.socketId = socket.id;
   socket.data.code = room.code;
-  socket.data.seat = session.seat;
+  socket.data.seat = session.seat ?? undefined;
   socket.data.token = session.token;
   socket.join(room.code);
   socket.emit("roomJoined", { code: room.code, seat: session.seat, token: session.token });
@@ -198,7 +286,7 @@ function startGrace(ctx: ServerContext, room: Room, session: Session): void {
   const handle = setTimeout(() => {
     session.grace = null;
     // Might already be out of the game, e.g. eliminated while away
-    if (room.state.players.has(session.seat)) leaveGame(room, session.seat);
+    if (isPlaying(room, session)) leaveGame(room, session.seat!);
     endSession(ctx, room, session);
     commit(ctx, room);
   }, ms);
@@ -220,6 +308,11 @@ function endSession(ctx: ServerContext, room: Room, session: Session): void {
     clearTimer(room);
     ctx.rooms.delete(room.code);
   }
+}
+
+// Seated and still in the lib's game (not a watcher, not eliminated)
+function isPlaying(room: Room, session: Session): boolean {
+  return session.seat !== null && room.state.players.has(session.seat);
 }
 
 function roomOf(rooms: RoomRegistry, socket: DutchSocket): Room | undefined {

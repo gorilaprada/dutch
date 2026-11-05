@@ -9,7 +9,7 @@ const CODE_LENGTH = 4;
 // One per player who joined, kept across reconnects. The lib knows only seats
 export type Session = {
   token: string; // secret, only ever sent to its owner
-  seat: number;
+  seat: number | null; // null = watcher, no seat in the game
   name: string;
   socketId: string | null; // null = disconnected, seat held during grace
   grace: { deadline: number; handle: ReturnType<typeof setTimeout> } | null;
