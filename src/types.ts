@@ -112,7 +112,7 @@ export type PeekView = Readonly<{
 }>;
 
 export type PlayerView = Readonly<{
-  you: number;
+  you: number | null; // null = spectator
   players: readonly SeatView[]; // sorted by seat, a Map does not survive JSON
   drawPileCount: number;
   topDiscard: Card | null;

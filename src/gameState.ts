@@ -1,5 +1,5 @@
 import type { Player, GameState, GameResult, Phase, Move } from "./types.ts";
-import { buildDeck, shuffleDrawPile, dealCards } from "./deck.ts";
+import { buildDeck, shuffleDrawPile, dealCards, addToDiscardPile } from "./deck.ts";
 import { initPlayer, ready, score} from "./player.ts";
 import { finishTurn, nextTurn } from "./moves.ts";
 import { ok, fail } from "./result.ts";
@@ -99,12 +99,11 @@ export function startGame(state: GameState, random: () => number): GameResult {
 
   }
 
-  const dealCardsState = dealCardsStart(state, random);
-  if (dealCardsState === null) return fail("Could not deal cards");
+  const dealtState = dealRound(state, random);
+  if (dealtState === null) return fail("Could not deal cards");
   const newState: GameState = {
-    ...dealCardsState,
-    phase: "memorizing",
-    turnIndex: Math.min(...dealCardsState.players.keys()),
+    ...dealtState,
+    turnIndex: Math.min(...dealtState.players.keys()),
   };
 
   return ok(withAction(newState, { type: "start" }));
@@ -150,13 +149,26 @@ export function countPoints(state: GameState, random: () => number): GameResult 
 
   const players = new Map(survivors.map(player => [player.seat, player]));
   const finished = survivors.length < 2 || survivors.every(player => player.score <= 0);
- 
-  const newState: GameState = {
+
+  const roundOver: GameState = {
     ...initGameState(random),
     players,
-    phase: finished ? "finished" : "lobby",
+    phase: "finished",
     turnIndex: Math.min(...players.keys()),
     actionSeq: state.actionSeq,
+  };
+  if (finished) return ok(withAction(roundOver, { type: "countPoints" }));
+
+  // Next round is dealt right away. The round winner starts:
+  // the survivor who lost the fewest points (ties: lowest seat)
+  const dealtState = dealRound(roundOver, random);
+  if (dealtState === null) return fail("Could not deal cards");
+  const pointsLost = (seat: number) => state.players.get(seat)!.score - players.get(seat)!.score;
+  const starter = [...survivors].sort((a, b) => pointsLost(a.seat) - pointsLost(b.seat) || a.seat - b.seat)[0]!;
+
+  const newState: GameState = {
+    ...dealtState,
+    turnIndex: starter.seat,
   };
 
   return ok(withAction(newState, { type: "countPoints" }));
@@ -165,7 +177,9 @@ export function countPoints(state: GameState, random: () => number): GameResult 
 
 // ========= Helper functions =============
 
-function dealCardsStart(state: GameState, random: () => number): GameState | null {
+// Deals 4 cards to every player, flips the top card onto the discard pile
+// and starts the memorizing phase
+function dealRound(state: GameState, random: () => number): GameState | null {
   let players = new Map<number, Player>();
   let deck = state.deck;
   for (const [seat, player] of state.players) {
@@ -179,11 +193,16 @@ function dealCardsStart(state: GameState, random: () => number): GameState | nul
       hand: [...result.dealtCards]
     });
   };
- 
+
+  const flip = dealCards(deck, 1, random);
+  const firstDiscard = flip?.dealtCards[0];
+  if (!flip || !firstDiscard) return null;
+
   const newState: GameState = {
     ...state,
-    deck,
+    deck: addToDiscardPile(flip.deck, firstDiscard),
     players,
+    phase: "memorizing",
   };
 
   return newState;

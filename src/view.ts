@@ -4,8 +4,9 @@ import { okView, failView } from "./result.ts";
 // Cards a player sees of their own hand while memorizing
 const MEMORIZE_INDICES = [0, 1];
 
-export function viewFor(state: GameState, seat: number): ViewResult {
-  if (!state.players.has(seat)) return failView("Player not found");
+// seat null = spectator (e.g. an eliminated player): sees only public cards
+export function viewFor(state: GameState, seat: number | null): ViewResult {
+  if (seat !== null && !state.players.has(seat)) return failView("Player not found");
 
   // Hidden cards are null: never send the Card, its id gives the card away
   const players: SeatView[] = [...state.players.values()]
@@ -45,7 +46,7 @@ export function viewFor(state: GameState, seat: number): ViewResult {
 }
 
 // ========= Helper functions =============
-function canSee(state: GameState, viewer: number, owner: number, handIndex: number): boolean {
+function canSee(state: GameState, viewer: number | null, owner: number, handIndex: number): boolean {
   if (state.phase === "scoring") return true;
   if (state.phase === "memorizing") return viewer === owner && MEMORIZE_INDICES.includes(handIndex);
   return false;
