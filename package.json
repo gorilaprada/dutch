@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "Dutch card game TS library",
   "scripts": {
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "test:all": "pnpm test && pnpm -r test"
   },
   "keywords": [],
   "author": "",

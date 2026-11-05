@@ -1,0 +1,54 @@
+/* Dutch — design tokens, compiled from tokens.json. One theme: "Neon Table" (always dark). */
+
+@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@400;500;600;700&family=VT323&display=swap');
+
+:root {
+  /* Color */
+  --bg-900: #150a24;         /* app background — the dark room */
+  --felt-700: #0b5d52;       /* table felt surface */
+  --felt-800: #083f3a;       /* recessed/inset panels */
+  --magenta-500: #ff2e93;    /* hero accent — primary actions, the Dutch button */
+  --magenta-600: #d6157a;    /* hover/pressed magenta */
+  --cyan-400: #23e5db;       /* power-card glow, links, "live now" */
+  --gold-400: #e8b94d;       /* trim, chips, score, card-back pattern */
+  --gold-600: #b5872f;       /* pressed gold, borders */
+  --red-500: #ff4557;        /* danger, penalty, elimination */
+  --cream-100: #f5e7c6;      /* primary text on dark */
+  --lavender-400: #9c8aae;   /* muted text on dark */
+  --parchment-100: #f3e9d8;  /* card face background */
+  --ink-900: #241433;        /* text/pips on a card face */
+  --cardback-700: #2a1240;   /* card-back base color */
+
+  /* Type */
+  --font-display: 'Monoton', cursive;
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'VT323', monospace;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Shadow */
+  --glow-magenta: 0 0 24px rgba(255, 46, 147, 0.55);
+  --glow-cyan: 0 0 18px rgba(35, 229, 219, 0.5);
+  --card-lift: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Type styles — apply as classes, e.g. <h1 class="ds-logo"> */
+.ds-logo       { font-family: var(--font-display); font-size: 96px; line-height: 0.95; font-weight: 400; }
+.ds-headline   { font-family: var(--font-display); font-size: 40px; line-height: 1.05; font-weight: 400; }
+.ds-body       { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; }
+.ds-label      { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 600; }
+.ds-button     { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 700; }
+.ds-score      { font-family: var(--font-mono); font-size: 32px; line-height: 1; font-weight: 400; }
+.ds-counter    { font-family: var(--font-mono); font-size: 18px; line-height: 1; font-weight: 400; }

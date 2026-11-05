@@ -1,0 +1,32 @@
+import { NoticeStack } from "./components/NoticeStack.tsx";
+import { useGame } from "./game/useGame.ts";
+import { Landing } from "./screens/Landing.tsx";
+import { Lobby } from "./screens/Lobby.tsx";
+import { TablePlaceholder } from "./screens/TablePlaceholder.tsx";
+
+export function App() {
+  const { state, actions } = useGame();
+  const { room, roomView } = state;
+
+  return (
+    <div className="room">
+      {room === null
+        ? state.resuming ? <Waiting text="Reconnecting to your table…" /> : <Landing />
+        : roomView === null
+          ? <Waiting text="Joining the table…" />
+          : roomView.view.phase === "lobby"
+            ? <Lobby roomView={roomView} />
+            : <TablePlaceholder roomView={roomView} />}
+
+      <NoticeStack notices={state.notices} onDismiss={actions.dismissNotice} />
+    </div>
+  );
+}
+
+function Waiting({ text }: { text: string }) {
+  return (
+    <div className="centered">
+      <p className="hint">{text}</p>
+    </div>
+  );
+}

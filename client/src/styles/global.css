@@ -1,0 +1,852 @@
+@import "./tokens.css";
+
+/* Ported from the archive Preact client. Every value comes from tokens.css:
+   no raw hex, no ad-hoc spacing. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-900);
+  color: var(--cream-100);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* The room: a dark floor with the felt lit from above. */
+.room {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 38%, rgba(11, 93, 82, 0.45), transparent 70%),
+    radial-gradient(circle at 50% 0%, rgba(255, 46, 147, 0.1), transparent 55%),
+    var(--bg-900);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  color: var(--magenta-500);
+  text-shadow: var(--glow-magenta);
+  letter-spacing: 0.04em;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lavender-400);
+}
+
+.counter {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Magenta is reserved for the single most important action on screen. */
+.btn-primary {
+  background: var(--magenta-500);
+  color: var(--cream-100);
+  box-shadow: var(--glow-magenta);
+}
+
+.btn-primary:active:not(:disabled) {
+  background: var(--magenta-600);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--gold-400);
+  border: 2px solid var(--gold-400);
+}
+
+.btn-secondary[aria-pressed="true"] {
+  background: var(--gold-400);
+  color: var(--ink-900);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--lavender-400);
+  padding: 14px 20px;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--cream-100);
+}
+
+/* ---------- Fields ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.input {
+  background: var(--felt-800);
+  border: 2px solid rgba(245, 231, 198, 0.16);
+  border-radius: var(--radius-md);
+  color: var(--cream-100);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  padding: var(--space-3) var(--space-4);
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.input::placeholder {
+  color: var(--lavender-400);
+}
+
+.input:focus {
+  border-color: var(--cyan-400);
+  box-shadow: var(--glow-cyan);
+}
+
+.input-code {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ---------- Playing card ---------- */
+
+.card {
+  width: var(--card-w, 104px);
+  height: calc(var(--card-w, 104px) * 1.4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--card-lift);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-2);
+  border: 2px solid transparent;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.card-facedown {
+  background-color: var(--cardback-700);
+  border-color: var(--gold-600);
+  background-image:
+    linear-gradient(45deg, var(--gold-400) 8%, transparent 8%, transparent 50%, var(--gold-400) 50%, var(--gold-400) 58%, transparent 58%, transparent),
+    linear-gradient(-45deg, var(--gold-400) 8%, transparent 8%, transparent 50%, var(--gold-400) 50%, var(--gold-400) 58%, transparent 58%, transparent);
+  background-size: 24px 24px;
+  background-position: center;
+  opacity: 0.96;
+}
+
+.card-face {
+  background: var(--parchment-100);
+  color: var(--ink-900);
+}
+
+.card-face.card-red {
+  color: var(--red-500);
+}
+
+/* Cyan says "a power is live" — a face-up Jack or Queen. */
+.card-power {
+  border-color: var(--cyan-400);
+  box-shadow: var(--card-lift), var(--glow-cyan);
+}
+
+.card-empty {
+  background: transparent;
+  border: 2px dashed rgba(156, 138, 174, 0.35);
+  box-shadow: none;
+}
+
+.card-rank {
+  font-weight: 700;
+  font-size: calc(var(--card-w, 104px) * 0.19);
+  line-height: 1;
+}
+
+.card-rank-bottom {
+  align-self: flex-end;
+  transform: rotate(180deg);
+}
+
+.card-suit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--card-w, 104px) * 0.3);
+}
+
+.card-tag {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cyan-400);
+  color: var(--ink-900);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+button.card {
+  cursor: default;
+  font: inherit;
+}
+
+button.card-clickable {
+  cursor: pointer;
+}
+
+button.card-clickable:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--card-lift), var(--glow-cyan);
+}
+
+/* Cards awaiting a selection (stack, jack, queen) pulse so the target is obvious. */
+.card-selectable {
+  outline: 2px solid var(--cyan-400);
+  outline-offset: 3px;
+  animation: pulse-cyan 1.4s ease-in-out infinite;
+}
+
+/* The first half of a Jack swap: magenta, and no longer pulsing for attention. */
+.card-selected {
+  outline: 2px solid var(--magenta-500);
+  outline-offset: 3px;
+  transform: translateY(-6px);
+  box-shadow: var(--card-lift), var(--glow-magenta);
+  animation: none;
+}
+
+@keyframes pulse-cyan {
+  0%, 100% { outline-color: rgba(35, 229, 219, 0.35); }
+  50% { outline-color: var(--cyan-400); }
+}
+
+.card-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.card-stack-label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--lavender-400);
+  text-transform: uppercase;
+}
+
+/* ---------- Player badge ---------- */
+
+.badge {
+  width: 140px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--felt-800);
+  text-align: center;
+  border: 2px solid transparent;
+}
+
+.badge-active {
+  border-color: var(--cyan-400);
+  box-shadow: var(--glow-cyan);
+}
+
+.badge-eliminated {
+  opacity: 0.45;
+}
+
+.badge-name {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--cream-100);
+  letter-spacing: 0.03em;
+  margin-bottom: var(--space-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-score {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--gold-400);
+}
+
+.badge-tag {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: var(--lavender-400);
+}
+
+.badge-tag-active { color: var(--cyan-400); }
+.badge-tag-out { color: var(--red-500); }
+.badge-tag-dutch { color: var(--magenta-500); }
+
+/* ---------- Landing & waiting room ---------- */
+
+.centered {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-4);
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 12vw, 96px);
+  line-height: 0.95;
+  color: var(--magenta-500);
+  text-shadow: var(--glow-magenta);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.tagline {
+  color: var(--lavender-400);
+  margin: var(--space-2) 0 0;
+  text-align: center;
+  max-width: 34ch;
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--felt-800);
+  border: 1px solid rgba(232, 185, 77, 0.22);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  box-shadow: var(--card-lift);
+}
+
+.panel-wide {
+  max-width: 560px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  color: var(--cream-100);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  background: rgba(0, 0, 0, 0.25);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+}
+
+.tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--lavender-400);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  background: var(--felt-700);
+  color: var(--cream-100);
+}
+
+.room-code {
+  font-family: var(--font-mono);
+  font-size: 64px;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  color: var(--gold-400);
+  text-align: center;
+  padding-left: 0.2em; /* balances the trailing letter-spacing */
+}
+
+.code-card {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--gold-600);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Four seats on one row, so the table reads as a table rather than a list. */
+.roster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.roster > li { display: flex; }
+
+/* The lobby panel is felt too, so a seat needs its own surface to read as one. */
+.roster .badge {
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid rgba(232, 185, 77, 0.2);
+}
+
+.roster .badge,
+.seat-empty {
+  width: 100%;
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.seat-empty {
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-lg);
+  border: 2px dashed rgba(156, 138, 174, 0.3);
+  text-align: center;
+  color: var(--lavender-400);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.hint {
+  color: var(--lavender-400);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- Table ---------- */
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid rgba(232, 185, 77, 0.18);
+  flex-wrap: wrap;
+}
+
+.table-header .wordmark {
+  font-size: 22px;
+}
+
+.header-meta {
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--gold-400);
+}
+
+.table {
+  flex: 1;
+  display: grid;
+  grid-template-areas:
+    ".    top    ."
+    "left center right"
+    ".    self   .";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(160px, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6) var(--space-4);
+  align-items: center;
+  justify-items: center;
+}
+
+/* This player's own badge sits beside their hand rather than under it, so the
+   whole table — seats, piles, controls — fits one screen without scrolling. */
+.self-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.seat-top { grid-area: top; }
+.seat-left { grid-area: left; }
+.seat-right { grid-area: right; }
+.seat-self { grid-area: self; }
+
+.seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hand {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+/* Hands grow (a failed stack costs a penalty card) and shrink (a good stack), so
+   the cards give up width rather than wrapping under the seat. */
+.seat-self .hand:has(> .card-slot:nth-child(5)) { --card-w: 84px; }
+.seat-self .hand:has(> .card-slot:nth-child(7)) { --card-w: 68px; }
+.seat-opponent .hand:has(> .card-slot:nth-child(5)) { --card-w: 52px; }
+.seat-opponent .hand:has(> .card-slot:nth-child(7)) { --card-w: 44px; }
+
+.seat-opponent { --card-w: 58px; }
+.seat-self { --card-w: 96px; }
+
+.felt {
+  grid-area: center;
+  width: 100%;
+  max-width: 520px;
+  background: var(--felt-700);
+  border: 1px solid rgba(232, 185, 77, 0.28);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35);
+  --card-w: 80px;
+}
+
+.pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pile-label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cream-100);
+  opacity: 0.7;
+}
+
+.controls {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.prompt {
+  min-height: 24px;
+  text-align: center;
+  color: var(--cyan-400);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.prompt-idle {
+  color: var(--lavender-400);
+  font-weight: 400;
+}
+
+.memorize {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--cyan-400);
+}
+
+.memorize-count {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  line-height: 1;
+}
+
+/* ---------- Banners, notices, overlays ---------- */
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-6);
+  background: rgba(255, 46, 147, 0.14);
+  border-bottom: 1px solid var(--magenta-500);
+  color: var(--cream-100);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.notices {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 20;
+  max-width: 320px;
+}
+
+.notice {
+  background: var(--felt-800);
+  border: 1px solid var(--red-500);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  color: var(--cream-100);
+  font-size: 14px;
+  line-height: 20px;
+  box-shadow: var(--card-lift);
+  cursor: pointer;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 10, 36, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  z-index: 30;
+}
+
+.overlay-panel {
+  background: var(--felt-800);
+  border: 1px solid var(--gold-600);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--card-lift);
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--magenta-500);
+  text-shadow: var(--glow-magenta);
+}
+
+.headline-sm {
+  font-size: 24px;
+}
+
+/* Floats over the top of the table so the next deal stays visible underneath. */
+.summary-float {
+  position: fixed;
+  /* Clears the table header; the Dutch banner is gone by the time a round scores. */
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  width: min(420px, calc(100vw - var(--space-8)));
+  background: var(--felt-800);
+  border: 1px solid var(--gold-600);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-6) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--card-lift);
+}
+
+.summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: var(--radius-md);
+}
+
+.summary-row-out {
+  border: 1px solid var(--red-500);
+}
+
+.summary-delta {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--red-500);
+}
+
+.summary-total {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  color: var(--gold-400);
+}
+
+.summary-message {
+  color: var(--cream-100);
+  margin: 0;
+}
+
+.spectating {
+  color: var(--red-500);
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .table {
+    grid-template-areas:
+      "top"
+      "center"
+      "left"
+      "right"
+      "self";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .seat-self { --card-w: 72px; }
+  .felt { --card-w: 68px; }
+  .self-row { flex-direction: column; gap: var(--space-3); }
+  .notices { left: var(--space-4); right: var(--space-4); max-width: none; }
+  .roster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Lobby additions (React client) ---------- */
+
+.badge-tag-ready { color: var(--gold-400); }
+
+.watchers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.watcher-chip {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--lavender-400);
+  border: 1px solid rgba(156, 138, 174, 0.35);
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-3);
+}
+
+.notice-info {
+  border-color: var(--cyan-400);
+}
