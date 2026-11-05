@@ -1,6 +1,7 @@
 import type { GameState, GameResult, Card, Phase } from "./types.ts";
 import { ok, fail } from "./result.ts";
 import { drawCard, addToDiscardPile } from "./deck.ts";
+import { withAction } from "./action.ts";
 import { 
   addDrawnCard,
   addCards,
@@ -36,7 +37,12 @@ export function drawFrom(state: GameState, seat: number, drawFrom: "drawPile" | 
     canStack: true,
   };
 
-  return ok(newState);
+  // A card from the discard pile was face up, one from the draw pile stays secret
+  return ok(withAction(newState,
+    drawFrom === "discardPile"
+      ? { type: "draw", seat, from: "discardPile", card: drawnCard }
+      : { type: "draw", seat, from: "drawPile" }
+  ));
 }
 
 export function switchCards(state: GameState, seat: number, handIndex: number): GameResult {
@@ -68,11 +74,12 @@ export function switchCards(state: GameState, seat: number, handIndex: number): 
     canStack: true,
   }
 
-  return ok(
+  return ok(withAction(
     newPhase === "drawing" ?
       finishTurn(newState) :
-      {...newState, phase: newPhase}
-  );
+      {...newState, phase: newPhase},
+    { type: "switch", seat, handIndex, discarded: discard }
+  ));
 }
 
 export function discardCard(state: GameState, seat: number): GameResult {
@@ -99,11 +106,12 @@ export function discardCard(state: GameState, seat: number): GameResult {
     canStack: true,
   };
 
-  return ok(
+  return ok(withAction(
     newPhase === "drawing" ?
       finishTurn(newState) :
-      {...newState, phase: newPhase}
-  );
+      {...newState, phase: newPhase},
+    { type: "discard", seat, discarded: player.drawnCard }
+  ));
 }
 
 export function stack(state: GameState, seat: number, handIndex: number, random: () => number): GameResult {
@@ -135,28 +143,30 @@ export function stack(state: GameState, seat: number, handIndex: number, random:
     const newPlayers = new Map(state.players);
     newPlayers.set(seat, addCards(player, [drawnCard]));
 
-    return ok({
+    // The wrongly stacked card is shown to everyone before going back
+    return ok(withAction({
       ...state,
       players: newPlayers,
       deck: result.deck,
-    });
+    }, { type: "stack", seat, handIndex, card: stackCard, success: false }));
   }
 
   const newDeck = addToDiscardPile(state.deck, stackCard);
   const newPlayers = new Map(state.players);
   const newPlayer = removeCard(player, handIndex);
   newPlayers.set(seat, newPlayer);
+  const action = { type: "stack", seat, handIndex, card: stackCard, success: true } as const;
 
   // Start counting points if onew player has zero cards
   if (newPlayer.hand.length === 0) {
-    return ok({
+    return ok(withAction({
       ...state,
       deck: newDeck,
       players: newPlayers,
       canStack: false,
       peek: null,
       phase: "scoring",
-    })
+    }, action));
   }
 
   const newState: GameState = {
@@ -166,7 +176,7 @@ export function stack(state: GameState, seat: number, handIndex: number, random:
     canStack: false,
   };
 
-  return ok(newState);
+  return ok(withAction(newState, action));
 }
 
 export function jackPower(
@@ -202,7 +212,14 @@ export function jackPower(
     players: newPlayers,
   });
 
-  return ok(newState);
+  return ok(withAction(newState, {
+    type: "jack",
+    seat: powerOwnerSeat,
+    seat1,
+    i1: handIndex1,
+    seat2,
+    i2: handIndex2,
+  }));
 }
 
 export function queenPower(
@@ -231,7 +248,8 @@ export function queenPower(
     }
   };
 
-  return ok(newState);
+  // Everyone sees which card is peeked, only the peeker sees its value
+  return ok(withAction(newState, { type: "queen", seat, targetSeat, handIndex }));
 }
 
 export function dutch(state: GameState, seat: number): GameResult {
@@ -249,7 +267,7 @@ export function dutch(state: GameState, seat: number): GameResult {
     dutch: { seat },
   });
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "dutch", seat }));
 }
 
 // ================ Helper functions ==========================

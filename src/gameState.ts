@@ -3,6 +3,7 @@ import { buildDeck, shuffleDrawPile, dealCards } from "./deck.ts";
 import { initPlayer, ready, score} from "./player.ts";
 import { finishTurn, nextTurn } from "./moves.ts";
 import { ok, fail } from "./result.ts";
+import { withAction } from "./action.ts";
 
 const TURN_PHASES: Phase[] = ["drawing", "deciding", "power_jack", "power_queen", "peeking"];
 
@@ -18,6 +19,8 @@ export function initGameState(random: () => number = Math.random): GameState {
     maxPlayers: 4,
     peek: null,
     dutch: null,
+    lastAction: null,
+    actionSeq: 0,
   };
 
   return gameState;
@@ -39,7 +42,7 @@ export function addPlayer(state: GameState): GameResult{
     players,
   };
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "join", seat }));
 }
 
 export function removePlayer(state: GameState, seat: number): GameResult {
@@ -55,13 +58,15 @@ export function removePlayer(state: GameState, seat: number): GameResult {
   players.delete(seat);
   const inRound = baseState.phase !== "lobby" && baseState.phase !== "finished";
 
-  return ok({
+  const newState: GameState = {
     ...baseState,
     players,
     dutch: baseState.dutch?.seat === seat ? null : baseState.dutch,
     peek: baseState.peek?.peeker === seat || baseState.peek?.targetSeat === seat ? null : baseState.peek,
     phase: inRound && players.size < 2 ? "finished" : baseState.phase,
-  })
+  };
+
+  return ok(withAction(newState, { type: "leave", seat }));
 }
 
 export function setPlayerReady(state: GameState, seat: number): GameResult {
@@ -80,7 +85,7 @@ export function setPlayerReady(state: GameState, seat: number): GameResult {
     players,
   };
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "ready", seat }));
 }
 
 export function startGame(state: GameState, random: () => number): GameResult {
@@ -102,7 +107,7 @@ export function startGame(state: GameState, random: () => number): GameResult {
     turnIndex: Math.min(...dealCardsState.players.keys()),
   };
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "start" }));
 }
 
 export function endMemorizing(state: GameState): GameResult {
@@ -113,7 +118,7 @@ export function endMemorizing(state: GameState): GameResult {
     phase: "drawing",
   };
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "endMemorizing" }));
 }
 
 export function endPeek(state: GameState): GameResult {
@@ -123,7 +128,7 @@ export function endPeek(state: GameState): GameResult {
     peek: null,
   });
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "endPeek", seat: state.turnIndex }));
 }
 
 export function countPoints(state: GameState, random: () => number): GameResult {
@@ -151,9 +156,10 @@ export function countPoints(state: GameState, random: () => number): GameResult 
     players,
     phase: finished ? "finished" : "lobby",
     turnIndex: Math.min(...players.keys()),
+    actionSeq: state.actionSeq,
   };
 
-  return ok(newState);
+  return ok(withAction(newState, { type: "countPoints" }));
 }
 
 

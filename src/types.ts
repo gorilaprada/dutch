@@ -62,6 +62,24 @@ export type Dutch = {
   seat: number;
 };
 
+// Only public information: every player may see the last action
+export type Action =
+  | { type: "join"; seat: number }
+  | { type: "ready"; seat: number }
+  | { type: "leave"; seat: number }
+  | { type: "start" }
+  | { type: "endMemorizing" }
+  | { type: "draw"; seat: number; from: "drawPile" }
+  | { type: "draw"; seat: number; from: "discardPile"; card: Card }
+  | { type: "switch"; seat: number; handIndex: number; discarded: Card }
+  | { type: "discard"; seat: number; discarded: Card }
+  | { type: "stack"; seat: number; handIndex: number; card: Card; success: boolean }
+  | { type: "jack"; seat: number; seat1: number; i1: number; seat2: number; i2: number }
+  | { type: "queen"; seat: number; targetSeat: number; handIndex: number }
+  | { type: "endPeek"; seat: number }
+  | { type: "dutch"; seat: number }
+  | { type: "countPoints" };
+
 export type GameState = Readonly<{
   deck: Deck;
   players: ReadonlyMap<number, Player>;
@@ -72,6 +90,8 @@ export type GameState = Readonly<{
   maxPlayers: number;
   peek: Peek | null;
   dutch: Dutch | null;
+  lastAction: Action | null;
+  actionSeq: number;
 }>;
 
 export type GameResult = 
