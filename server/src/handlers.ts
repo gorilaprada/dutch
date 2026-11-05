@@ -7,20 +7,29 @@ import type {
   SocketData,
 } from "./events.ts";
 import { createRoom, findRoom, type Room, type RoomRegistry } from "./rooms.ts";
+import { schedule, clearTimer, type Timings } from "./timers.ts";
 
 export type DutchServer = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 type DutchSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 
+export type ServerContext = {
+  io: DutchServer;
+  rooms: RoomRegistry;
+  timings: Timings;
+};
+
 const MAX_NAME_LENGTH = 20;
 
-export function registerHandlers(io: DutchServer, socket: DutchSocket, rooms: RoomRegistry): void {
+export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void {
+  const { rooms } = ctx;
+
   socket.on("createRoom", payload => {
     if (socket.data.code !== undefined) return socket.emit("roomError", "Already in a room");
     const name = parseName(payload);
     if (name === null) return socket.emit("roomError", "Invalid name");
 
     const room = createRoom(rooms);
-    if (!joinRoom(io, socket, room, name)) rooms.delete(room.code);
+    if (!joinRoom(ctx, socket, room, name)) rooms.delete(room.code);
   });
 
   socket.on("joinRoom", payload => {
@@ -31,7 +40,7 @@ export function registerHandlers(io: DutchServer, socket: DutchSocket, rooms: Ro
 
     const room = findRoom(rooms, code);
     if (!room) return socket.emit("roomError", "Room not found");
-    joinRoom(io, socket, room, name);
+    joinRoom(ctx, socket, room, name);
   });
 
   socket.on("move", payload => {
@@ -50,7 +59,7 @@ export function registerHandlers(io: DutchServer, socket: DutchSocket, rooms: Ro
     room.state = result.state;
 
     if (move.type === "leave") leaveRoom(rooms, socket, room);
-    broadcast(io, room);
+    commit(ctx, room);
   });
 
   socket.on("disconnect", () => {
@@ -64,14 +73,29 @@ export function registerHandlers(io: DutchServer, socket: DutchSocket, rooms: Ro
       if (result.ok) room.state = result.state;
     }
     leaveRoom(rooms, socket, room);
-    broadcast(io, room);
+    commit(ctx, room);
   });
+}
+
+// Every state change goes through here: (re)arm the phase timer, then
+// send the views. Timer first, so the views carry the new deadline
+export function commit(ctx: ServerContext, room: Room): void {
+  // A deleted room must not restart a timer
+  if (ctx.rooms.get(room.code) !== room) return clearTimer(room);
+
+  schedule(room, ctx.timings, move => {
+    const result = applyMove(room.state, move, Math.random);
+    if (result.ok) room.state = result.state;
+    commit(ctx, room);
+  });
+  broadcast(ctx.io, room);
 }
 
 // Sends every socket in the room its own view: cards it may not see are hidden
 export function broadcast(io: DutchServer, room: Room): void {
   const socketIds = io.sockets.adapter.rooms.get(room.code) ?? new Set<string>();
   const names = Object.fromEntries(room.names);
+  const deadline = room.timer?.deadline ?? null;
 
   for (const id of socketIds) {
     const socket = io.sockets.sockets.get(id);
@@ -80,12 +104,12 @@ export function broadcast(io: DutchServer, room: Room): void {
     const seat = socket.data.seat;
     const viewer = seat !== undefined && room.state.players.has(seat) ? seat : null;
     const result = viewFor(room.state, viewer);
-    if (result.ok) socket.emit("view", { code: room.code, names, view: result.view });
+    if (result.ok) socket.emit("view", { code: room.code, names, view: result.view, deadline });
   }
 }
 
 // ========= Helper functions =============
-function joinRoom(io: DutchServer, socket: DutchSocket, room: Room, name: string): boolean {
+function joinRoom(ctx: ServerContext, socket: DutchSocket, room: Room, name: string): boolean {
   const result = applyMove(room.state, { type: "addPlayer" }, Math.random);
   if (!result.ok) {
     socket.emit("roomError", result.error);
@@ -102,7 +126,7 @@ function joinRoom(io: DutchServer, socket: DutchSocket, room: Room, name: string
   socket.join(room.code);
 
   socket.emit("roomJoined", { code: room.code, seat: action.seat });
-  broadcast(io, room);
+  commit(ctx, room);
   return true;
 }
 
@@ -113,7 +137,10 @@ function leaveRoom(rooms: RoomRegistry, socket: DutchSocket, room: Room): void {
   socket.data.seat = undefined;
 
   // The room lives as long as someone is connected to it, spectators included
-  if (room.names.size === 0) rooms.delete(room.code);
+  if (room.names.size === 0) {
+    clearTimer(room);
+    rooms.delete(room.code);
+  }
 }
 
 function roomOf(rooms: RoomRegistry, socket: DutchSocket): Room | undefined {

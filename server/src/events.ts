@@ -5,6 +5,7 @@ export type RoomView = Readonly<{
   code: string;
   names: Readonly<Record<number, string>>; // seat -> name
   view: PlayerView;
+  deadline: number | null; // epoch ms when the current timed phase ends
 }>;
 
 export type ClientToServerEvents = {

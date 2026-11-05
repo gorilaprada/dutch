@@ -1,75 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import type { AddressInfo } from "node:net";
-import { io as connect, type Socket } from "socket.io-client";
-import { createGameServer } from "../src/app.ts";
-import type { ClientToServerEvents, RoomView, ServerToClientEvents } from "../src/events.ts";
+import { startServer, next, viewWhere, wait, startedGame as startGameWith } from "./harness.ts";
 
-type Client = Socket<ServerToClientEvents, ClientToServerEvents>;
-
-let server: ReturnType<typeof createGameServer>;
-let url: string;
-const clients: Client[] = [];
+let harness: Awaited<ReturnType<typeof startServer>>;
+let server: typeof harness.server;
+let client: typeof harness.client;
 
 beforeEach(async () => {
-  server = createGameServer();
-  await new Promise<void>(resolve => server.httpServer.listen(0, resolve));
-  url = `http://localhost:${(server.httpServer.address() as AddressInfo).port}`;
+  harness = await startServer();
+  ({ server, client } = harness);
 });
 
 afterEach(async () => {
-  for (const client of clients.splice(0)) client.disconnect();
-  await server.io.close();
+  await harness.close();
 });
 
-// ========= Helpers =============
-async function client(): Promise<Client> {
-  const socket: Client = connect(url, { transports: ["websocket"], forceNew: true });
-  clients.push(socket);
-  await new Promise<void>(resolve => socket.once("connect", () => resolve()));
-  return socket;
-}
-
-// Attach the listener BEFORE emitting, Socket.IO does not buffer events
-function next<E extends keyof ServerToClientEvents>(socket: Client, event: E) {
-  return new Promise<Parameters<ServerToClientEvents[E]>[0]>(resolve => {
-    socket.once(event, ((payload: Parameters<ServerToClientEvents[E]>[0]) => resolve(payload)) as never);
-  });
-}
-
-function viewWhere(socket: Client, check: (v: RoomView) => boolean): Promise<RoomView> {
-  return new Promise(resolve => {
-    const listener = (v: RoomView) => {
-      if (!check(v)) return;
-      socket.off("view", listener);
-      resolve(v);
-    };
-    socket.on("view", listener);
-  });
-}
-
-// Two players in one room, both ready, game started
-async function startedGame() {
-  const ana = await client();
-  const bob = await client();
-
-  const anaJoined = next(ana, "roomJoined");
-  ana.emit("createRoom", { name: "Ana" });
-  const { code } = await anaJoined;
-
-  const bobJoined = next(bob, "roomJoined");
-  bob.emit("joinRoom", { code, name: "Bob" });
-  await bobJoined;
-
-  const anaMemorizing = viewWhere(ana, v => v.view.phase === "memorizing");
-  const bobMemorizing = viewWhere(bob, v => v.view.phase === "memorizing");
-  const bothReady = viewWhere(ana, v => v.view.players.every(p => p.isReady));
-  ana.emit("move", { type: "ready" });
-  bob.emit("move", { type: "ready" });
-  await bothReady;
-  ana.emit("move", { type: "start" });
-
-  return { ana, bob, code, anaView: await anaMemorizing, bobView: await bobMemorizing };
-}
+const startedGame = () => startGameWith(client);
 
 describe("rooms", () => {
   test("createRoom returns a code and seat 0, and a lobby view with the name", async () => {
@@ -161,7 +106,7 @@ describe("moves", () => {
     const error = next(bob, "moveError");
     bob.emit("move", { type: "draw", from: "drawPile" });
     expect(await error).toBe("Not your turn");
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await wait(50);
     expect(anaGotView).toBe(false);
   });
 
@@ -219,7 +164,7 @@ describe("leaving", () => {
     expect(server.rooms.has(code)).toBe(true);
 
     ana.disconnect();
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await wait(50);
     expect(server.rooms.has(code)).toBe(false);
   });
 });

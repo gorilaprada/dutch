@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import { initGameState, type GameState } from "../../src/entrypoint.ts";
+import type { RoomTimer } from "./timers.ts";
 
 // 0/O and 1/I are left out so a code stays unambiguous when read aloud
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -9,6 +10,7 @@ export type Room = {
   code: string;
   state: GameState;
   names: Map<number, string>; // seat -> name, the lib knows only seats
+  timer: RoomTimer | null;
 };
 
 export type RoomRegistry = Map<string, Room>;
@@ -17,7 +19,7 @@ export function createRoom(rooms: RoomRegistry): Room {
   let code = randomCode();
   while (rooms.has(code)) code = randomCode();
 
-  const room: Room = { code, state: initGameState(), names: new Map() };
+  const room: Room = { code, state: initGameState(), names: new Map(), timer: null };
   rooms.set(code, room);
   return room;
 }
