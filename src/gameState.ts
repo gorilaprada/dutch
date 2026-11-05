@@ -1,4 +1,4 @@
-import type { Player, GameState, GameResult, Phase, Move } from "./types.ts";
+import type { Player, GameState, GameResult, Phase, RoundScore } from "./types.ts";
 import { buildDeck, shuffleDrawPile, dealCards, addToDiscardPile } from "./deck.ts";
 import { initPlayer, ready, score} from "./player.ts";
 import { finishTurn, nextTurn } from "./moves.ts";
@@ -150,6 +150,17 @@ export function countPoints(state: GameState, random: () => number): GameResult 
   const players = new Map(survivors.map(player => [player.seat, player]));
   const finished = survivors.length < 2 || survivors.every(player => player.score <= 0);
 
+  // What everyone lost this round, eliminated players included
+  const summary: RoundScore[] = scored
+    .map(player => ({
+      seat: player.seat,
+      pointsLost: state.players.get(player.seat)!.score - player.score,
+      score: player.score,
+      eliminated: !players.has(player.seat),
+    }))
+    .sort((a, b) => a.seat - b.seat);
+  const action = { type: "countPoints", summary } as const;
+
   const roundOver: GameState = {
     ...initGameState(random),
     players,
@@ -157,21 +168,22 @@ export function countPoints(state: GameState, random: () => number): GameResult 
     turnIndex: Math.min(...players.keys()),
     actionSeq: state.actionSeq,
   };
-  if (finished) return ok(withAction(roundOver, { type: "countPoints" }));
+  if (finished) return ok(withAction(roundOver, action));
 
   // Next round is dealt right away. The round winner starts:
   // the survivor who lost the fewest points (ties: lowest seat)
   const dealtState = dealRound(roundOver, random);
   if (dealtState === null) return fail("Could not deal cards");
-  const pointsLost = (seat: number) => state.players.get(seat)!.score - players.get(seat)!.score;
-  const starter = [...survivors].sort((a, b) => pointsLost(a.seat) - pointsLost(b.seat) || a.seat - b.seat)[0]!;
+  const starter = summary
+    .filter(result => !result.eliminated)
+    .sort((a, b) => a.pointsLost - b.pointsLost || a.seat - b.seat)[0]!;
 
   const newState: GameState = {
     ...dealtState,
     turnIndex: starter.seat,
   };
 
-  return ok(withAction(newState, { type: "countPoints" }));
+  return ok(withAction(newState, action));
 }
 
 

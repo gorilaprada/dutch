@@ -146,7 +146,7 @@ describe("lastAction", () => {
     const scoring: GameState = { ...state, phase: "scoring" };
 
     const next = unwrap(countPoints(scoring, random));
-    expect(next.lastAction).toEqual({ type: "countPoints" });
+    expect(next.lastAction?.type).toBe("countPoints");
     expect(next.actionSeq).toBe(scoring.actionSeq + 1);
   });
 });

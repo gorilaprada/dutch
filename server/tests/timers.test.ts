@@ -67,7 +67,7 @@ describe("timers", () => {
     expect(reveal.deadline).not.toBeNull();
 
     const round = await nextRound;
-    expect(round.view.lastAction).toEqual({ type: "countPoints" });
+    expect(round.view.lastAction?.type).toBe("countPoints");
     expect(round.view.players.every(p => p.hand.length === 4)).toBe(true);
   });
 

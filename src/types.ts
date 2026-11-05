@@ -62,6 +62,14 @@ export type Dutch = {
   seat: number;
 };
 
+// One player's result for a round (public: hands are revealed at scoring)
+export type RoundScore = Readonly<{
+  seat: number;
+  pointsLost: number;
+  score: number; // after this round
+  eliminated: boolean;
+}>;
+
 // Only public information: every player may see the last action
 export type Action =
   | { type: "join"; seat: number }
@@ -78,7 +86,7 @@ export type Action =
   | { type: "queen"; seat: number; targetSeat: number; handIndex: number }
   | { type: "endPeek"; seat: number }
   | { type: "dutch"; seat: number }
-  | { type: "countPoints" };
+  | { type: "countPoints"; summary: readonly RoundScore[] };
 
 export type GameState = Readonly<{
   deck: Deck;

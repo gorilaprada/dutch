@@ -96,6 +96,32 @@ describe("next round", () => {
     expect([...next.players.keys()]).toEqual([0]);
     expect(next.players.get(0)!.hand).toEqual([]);
   });
+
+  test("the countPoints action summarizes the round for every player", () => {
+    const next = unwrap(countPoints(scoring(), random));
+    expect(next.lastAction).toEqual({
+      type: "countPoints",
+      summary: [
+        { seat: 0, pointsLost: 2, score: 48, eliminated: false },
+        { seat: 1, pointsLost: 10, score: 40, eliminated: false },
+      ],
+    });
+  });
+
+  test("the summary marks eliminated players, black kings count 0", () => {
+    // Seat 1: red kings and queens = 50, eliminated. Seat 0: black king = 0
+    let state = setHand(scoring(), 1, [card("♡", 13), card("♢", 13), card("♡", 12), card("♢", 12)]);
+    state = setHand(state, 0, [card("♤", 13)]);
+    const next = unwrap(countPoints(state, random));
+
+    expect(next.lastAction).toEqual({
+      type: "countPoints",
+      summary: [
+        { seat: 0, pointsLost: 0, score: 50, eliminated: false },
+        { seat: 1, pointsLost: 50, score: 0, eliminated: true },
+      ],
+    });
+  });
 });
 
 describe("spectator view", () => {
