@@ -1,24 +1,10 @@
-import { useEffect, useState } from "react";
+import { useNow } from "./useNow.ts";
 
-// Whole seconds left until `endsAt` (epoch ms), ticking down; null when nothing runs
+// Whole seconds left until `endsAt` (epoch ms), ticking down; null when nothing runs.
+// Worked out during render, so the countdown shows on the first frame
 export function useCountdown(endsAt: number | null): number | null {
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (endsAt === null) {
-      setSecondsLeft(null);
-      return;
-    }
-
-    const tick = () => {
-      const remaining = Math.ceil((endsAt - Date.now()) / 1000);
-      setSecondsLeft(remaining > 0 ? remaining : null);
-    };
-
-    tick();
-    const timer = window.setInterval(tick, 200);
-    return () => window.clearInterval(timer);
-  }, [endsAt]);
-
-  return secondsLeft;
+  const now = useNow(200, endsAt !== null);
+  if (endsAt === null) return null;
+  const remaining = Math.ceil((endsAt - now) / 1000);
+  return remaining > 0 ? remaining : null;
 }

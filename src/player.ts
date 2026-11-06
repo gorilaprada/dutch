@@ -81,7 +81,8 @@ export function score(player: Player): Player {
 }
 
 //=============== Helper functions ===================
-function cardPoints(card: Card): number {
+// Black kings count 0, every other card its value (exported: the client shows hand totals)
+export function cardPoints(card: Card): number {
   if (card.value === 13 && (card.suit === "♤" || card.suit === "♧")) return 0;
   return card.value;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach } from "vitest";
-import { initPlayer, addCards, addDrawnCard }from "../src/player.js";
+import { initPlayer, addCards, addDrawnCard, cardPoints } from "../src/player.js";
 import type { Card, Player } from "../src/types.ts";
 
 describe("Player", () => {
@@ -39,5 +39,16 @@ describe("Player", () => {
     const newPlayer = addDrawnCard(player, drawn);
 
     expect(newPlayer.drawnCard).toEqual(drawn);
+  });
+});
+
+describe("cardPoints", () => {
+  test("black kings count 0, red kings 13, other cards their value", () => {
+    expect(cardPoints({ id: "♤_13", suit: "♤", value: 13 })).toBe(0);
+    expect(cardPoints({ id: "♧_13", suit: "♧", value: 13 })).toBe(0);
+    expect(cardPoints({ id: "♡_13", suit: "♡", value: 13 })).toBe(13);
+    expect(cardPoints({ id: "♢_13", suit: "♢", value: 13 })).toBe(13);
+    expect(cardPoints({ id: "♤_1", suit: "♤", value: 1 })).toBe(1);
+    expect(cardPoints({ id: "♧_12", suit: "♧", value: 12 })).toBe(12);
   });
 });

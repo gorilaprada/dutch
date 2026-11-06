@@ -4,7 +4,11 @@ type PlayerBadgeProps = {
   name: string;
   score: number;
   isActive?: boolean;
+  // The viewer's own badge: the turn tag reads YOUR TURN
+  isYou?: boolean;
   isEliminated?: boolean;
+  // Disconnected, seat held: dimmed with an OFFLINE countdown
+  offlineSeconds?: number | null;
   // Overrides the turn/out tag: YOU, READY, DUTCH...
   tag?: string;
   tagTone?: BadgeTone;
@@ -14,17 +18,22 @@ export function PlayerBadge({
   name,
   score,
   isActive = false,
+  isYou = false,
   isEliminated = false,
+  offlineSeconds = null,
   tag,
   tagTone,
 }: PlayerBadgeProps) {
-  const resolvedTag = tag ?? (isEliminated ? "OUT" : isActive ? "THEIR TURN" : " ");
-  const tone = tagTone ?? (isEliminated ? "out" : isActive ? "active" : "muted");
+  const offline = offlineSeconds !== null;
+  const resolvedTag = offline
+    ? `OFFLINE ${offlineSeconds}s`
+    : tag ?? (isEliminated ? "OUT" : isActive ? (isYou ? "YOUR TURN" : "THEIR TURN") : " ");
+  const tone = offline ? "out" : tagTone ?? (isEliminated ? "out" : isActive ? "active" : "muted");
 
   const classes = [
     "badge",
     isActive && !isEliminated ? "badge-active" : "",
-    isEliminated ? "badge-eliminated" : "",
+    isEliminated || offline ? "badge-eliminated" : "",
   ].filter(Boolean).join(" ");
 
   return (

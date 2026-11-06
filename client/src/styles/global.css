@@ -864,3 +864,19 @@ button.card-clickable:hover {
   color: var(--cream-100);
   opacity: 0.85;
 }
+
+/* Who is out of the game and who only watches */
+.spectators {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--lavender-400);
+}
+
+/* Own connection lost: the socket reconnects and resumes on its own */
+.banner-offline {
+  background: rgba(255, 69, 87, 0.14);
+  border-bottom-color: var(--red-500);
+}

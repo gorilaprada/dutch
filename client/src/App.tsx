@@ -10,6 +10,9 @@ export function App() {
 
   return (
     <div className="room">
+      {room !== null && !state.connected ? (
+        <div className="banner banner-offline" role="status">Connection lost: reconnecting…</div>
+      ) : null}
       {room === null
         ? state.resuming ? <Waiting text="Reconnecting to your table…" /> : <Landing />
         : roomView === null

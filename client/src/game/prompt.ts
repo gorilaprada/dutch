@@ -5,7 +5,7 @@ import { isMyTurn, isSpectator, nameOf } from "./selectors.ts";
 export type Prompt = { text: string; idle: boolean }; // idle = nothing for me to do
 
 // The line above my hand: what I can do right now, or who we wait on
-export function promptFor(roomView: RoomView, jackPick: Pick | null, stackMode: boolean): Prompt {
+export function promptFor(roomView: RoomView, jackPick: Pick | null, stackMode: boolean, eliminated = false): Prompt {
   const { phase, turnIndex, peek, you, fromDiscard, canStack, topDiscard } = roomView.view;
   const name = (seat: number) => nameOf(roomView, seat);
   const act = (text: string): Prompt => ({ text, idle: false });
@@ -20,7 +20,9 @@ export function promptFor(roomView: RoomView, jackPick: Pick | null, stackMode: 
       ? act(`Peeking at ${target} card ${peek.handIndex + 1}…`)
       : wait(`${name(peek.peeker)} is peeking at ${target} card ${peek.handIndex + 1}…`);
   }
-  if (isSpectator(roomView)) return wait(`You're watching. ${name(turnIndex)} is playing.`);
+  if (isSpectator(roomView)) {
+    return wait(`${eliminated ? "You're out." : "You're watching."} ${name(turnIndex)} is playing.`);
+  }
 
   const myTurn = isMyTurn(roomView);
   if (phase === "power_queen") {

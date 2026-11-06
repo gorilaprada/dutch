@@ -1,4 +1,5 @@
 import type { Phase } from "../game/protocol.ts";
+import { ActionButton } from "./ActionButton.tsx";
 
 const COUNTDOWN_LABEL: Partial<Record<Phase, string>> = {
   memorizing: "Memorize",
@@ -11,9 +12,10 @@ type TableHeaderProps = {
   turn: string; // YOU or a name
   phase: Phase;
   secondsLeft: number | null;
+  onLeave: () => void;
 };
 
-export function TableHeader({ code, turn, phase, secondsLeft }: TableHeaderProps) {
+export function TableHeader({ code, turn, phase, secondsLeft, onLeave }: TableHeaderProps) {
   const countdown = COUNTDOWN_LABEL[phase];
   return (
     <header className="table-header">
@@ -33,6 +35,7 @@ export function TableHeader({ code, turn, phase, secondsLeft }: TableHeaderProps
             <span className="memorize-count" aria-label={`${countdown} countdown`}>{secondsLeft}</span>
           </div>
         ) : null}
+        <ActionButton variant="ghost" onClick={onLeave}>LEAVE</ActionButton>
       </div>
     </header>
   );

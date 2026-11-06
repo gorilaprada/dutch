@@ -40,6 +40,17 @@ describe("Table", () => {
     expect(emitted.at(-1)).toEqual({ event: "move", payload: { type: "dutch" } });
   });
 
+  test("the turn tag reads YOUR TURN on my badge, THEIR TURN on others", () => {
+    const { fire } = renderApp();
+    enterRoom(fire, tableView());
+    expect(screen.getByText("YOUR TURN")).toBeInTheDocument();
+    expect(screen.queryByText("THEIR TURN")).toBeNull();
+
+    fire("view", tableView({ turnIndex: 1 }));
+    expect(screen.getByText("THEIR TURN")).toBeInTheDocument();
+    expect(screen.queryByText("YOUR TURN")).toBeNull();
+  });
+
   test("not my turn: no drawing, no Dutch, but a click stacks", async () => {
     const { fire, emitted } = renderApp();
     enterRoom(fire, tableView({ turnIndex: 1 }));

@@ -96,6 +96,7 @@ export function parseMove(input: unknown, seat: number): Move | null {
 
 export { viewFor } from "./view.ts";
 export { initGameState } from "./gameState.ts";
+export { cardPoints } from "./player.ts";
 export type {
   GameState,
   GameResult,
