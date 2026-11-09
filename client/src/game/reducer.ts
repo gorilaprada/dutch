@@ -1,4 +1,4 @@
-import type { RoomView } from "./protocol.ts";
+import type { PlayerView, RoomView } from "./protocol.ts";
 
 export type Notice = {
   id: number;
@@ -17,6 +17,8 @@ export type GameStoreState = {
   resuming: boolean; // a resume was sent and has no answer yet
   room: JoinedRoom | null;
   roomView: RoomView | null;
+  // The view before the latest action: animations compare it with the current one
+  previousView: PlayerView | null;
   notices: readonly Notice[];
   nextNoticeId: number;
 };
@@ -40,6 +42,7 @@ export const initialState: GameStoreState = {
   resuming: false,
   room: null,
   roomView: null,
+  previousView: null,
   notices: [],
   nextNoticeId: 1,
 };
@@ -61,18 +64,22 @@ export function reducer(state: GameStoreState, event: GameEvent): GameStoreState
         resuming: false,
         room: event.room,
         roomView: sameRoom ? state.roomView : null,
+        previousView: sameRoom ? state.previousView : null,
       };
     }
     case "view": {
       const { roomView } = event;
       // Only views of the room we are in, and never an older one
       if (state.room?.code !== roomView.code) return state;
-      if (state.roomView && roomView.view.actionSeq < state.roomView.view.actionSeq) return state;
-      return { ...state, roomView };
+      const current = state.roomView?.view ?? null;
+      if (current && roomView.view.actionSeq < current.actionSeq) return state;
+      // A repeated view (same actionSeq) keeps the pair: nothing new happened
+      const newAction = current === null || roomView.view.actionSeq > current.actionSeq;
+      return { ...state, roomView, previousView: newAction ? current : state.previousView };
     }
     case "roomError": {
       const lost = SESSION_LOST.includes(event.message);
-      const next = lost ? { ...state, room: null, roomView: null } : state;
+      const next = lost ? { ...state, room: null, roomView: null, previousView: null } : state;
       return notify({ ...next, resuming: false }, event.message, lost ? "info" : "error");
     }
     case "moveError":
@@ -80,7 +87,7 @@ export function reducer(state: GameStoreState, event: GameEvent): GameStoreState
     case "dismissNotice":
       return { ...state, notices: state.notices.filter(notice => notice.id !== event.id) };
     case "leftRoom":
-      return { ...state, room: null, roomView: null };
+      return { ...state, room: null, roomView: null, previousView: null };
     default: {
       const unhandled: never = event;
       return unhandled;

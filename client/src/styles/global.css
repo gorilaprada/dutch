@@ -209,7 +209,9 @@ button {
   box-shadow: none;
 }
 
+/* Pinned to the corner: a clickable card is a <button>, which centres its text */
 .card-rank {
+  align-self: flex-start;
   font-weight: 700;
   font-size: calc(var(--card-w, 104px) * 0.19);
   line-height: 1;
@@ -333,7 +335,10 @@ button.card-clickable:hover {
   color: var(--gold-400);
 }
 
+/* Always one line tall: an empty tag (not this player's turn) collapsed to 0px,
+   so every turn change resized the badges and shifted the whole table */
 .badge-tag {
+  min-height: 1em;
   margin-top: var(--space-1);
   font-family: var(--font-mono);
   font-size: 14px;
@@ -853,16 +858,43 @@ button.card-clickable:hover {
 
 /* ---------- Table additions (React client) ---------- */
 
-/* What just happened, in words, until the animations arrive */
+/* What just happened, in words. A fixed height of two lines, always rendered:
+   the longest line (a Jack swap between two 20-character names, ~95 characters)
+   fits in two lines at every breakpoint, so a new move never shifts the table */
 .last-move {
+  box-sizing: border-box;
+  height: calc(2 * 1.3em + 2 * var(--space-2));
   margin: 0;
   padding: var(--space-2) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 18px;
+  line-height: 1.3;
   letter-spacing: 0.04em;
   color: var(--cream-100);
   opacity: 0.85;
+}
+
+/* Safety net for a viewport narrower than planned: clip to two lines, never grow */
+.last-move-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .last-move { font-size: 14px; }
+}
+
+@media (max-width: 480px) {
+  .last-move {
+    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+  }
 }
 
 /* Who is out of the game and who only watches */
@@ -879,4 +911,48 @@ button.card-clickable:hover {
 .banner-offline {
   background: rgba(255, 69, 87, 0.14);
   border-bottom-color: var(--red-500);
+}
+
+/* ---------- Animations ---------- */
+
+/* The flip happens on a wrapper, so the card keeps its own hover transform */
+.card-flip {
+  transform-style: preserve-3d;
+}
+
+.flight-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.flight {
+  position: fixed;
+}
+
+.flight .card {
+  width: 100%;
+  height: 100%;
+  box-shadow: var(--card-lift), 0 18px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Jack swap: cyan, the power colour */
+.flight-power .card {
+  box-shadow: var(--card-lift), var(--glow-cyan);
+}
+
+/* Penalty card after a wrong stack */
+.flight-penalty .card {
+  border-color: var(--red-500);
+}
+
+.card-shake {
+  border-color: var(--red-500);
+  box-shadow: var(--card-lift), 0 0 18px rgba(255, 77, 94, 0.6);
+}
+
+/* Queen peek: the target lifts, cyan */
+.card-lift {
+  box-shadow: var(--card-lift), var(--glow-cyan);
 }

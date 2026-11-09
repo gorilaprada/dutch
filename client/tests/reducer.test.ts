@@ -69,3 +69,16 @@ describe("reducer", () => {
     expect(offline.room).toEqual(joined.room);
   });
 });
+
+describe("previousView", () => {
+  test("keeps the view before the latest action, through repeated views", () => {
+    const first = reducer(joined, { type: "view", roomView: roomView({ actionSeq: 4 }) });
+    expect(first.previousView).toBeNull();
+    const second = reducer(first, { type: "view", roomView: roomView({ actionSeq: 5 }) });
+    expect(second.previousView?.actionSeq).toBe(4);
+    // A repeated view (a connection change) keeps the pair
+    const repeated = reducer(second, { type: "view", roomView: roomView({ actionSeq: 5 }) });
+    expect(repeated.previousView?.actionSeq).toBe(4);
+    expect(reducer(repeated, { type: "leftRoom" }).previousView).toBeNull();
+  });
+});

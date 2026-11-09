@@ -11,6 +11,7 @@
     "test": "tsc --noEmit -p . && vitest --run"
   },
   "dependencies": {
+    "motion": "^14.9.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "socket.io-client": "^4.8.4"

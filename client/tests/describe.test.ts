@@ -42,4 +42,11 @@ describe("describeAction", () => {
   test("a spectator sees names only", () => {
     expect(say({ type: "draw", seat: 0, from: "drawPile" }, null)).toBe("Ana drew from the deck");
   });
+
+  test("the longest line fits the 95 characters the last-move CSS is sized for", () => {
+    // Names are at most 20 characters (server rule); hands can grow past 9 cards with penalties
+    const longName = () => "W".repeat(20);
+    const line = describeAction({ type: "jack", seat: 2, seat1: 0, i1: 9, seat2: 1, i2: 9 }, longName, null);
+    expect(line?.length).toBeLessThanOrEqual(95);
+  });
 });

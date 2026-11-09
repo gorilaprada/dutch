@@ -144,6 +144,18 @@ describe("Table", () => {
     expect(screen.getByText("Dutch called by Bob: one last turn each")).toBeInTheDocument();
   });
 
+  test("the last-move line is always there, the same element from move to move", () => {
+    const { fire, container } = renderApp();
+    enterRoom(fire, tableView({ view: { lastAction: null } }));
+    const line = container.querySelector(".last-move");
+    expect(line).toBeInTheDocument();
+    expect(line).toHaveTextContent(/^$/);
+
+    fire("view", tableView({ view: { lastAction: { type: "discard", seat: 1, discarded: card("♢", 9) }, actionSeq: 2 } }));
+    expect(container.querySelector(".last-move")).toBe(line);
+    expect(line).toHaveTextContent("Bob discarded 9♢");
+  });
+
   test("a spectator sees the table without controls", () => {
     const { fire } = renderApp();
     enterRoom(fire, tableView({ you: null }), null);

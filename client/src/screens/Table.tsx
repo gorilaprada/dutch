@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import { AnimationLayer } from "../components/AnimationLayer.tsx";
 import { ConfirmLeave } from "../components/ConfirmLeave.tsx";
 import { Controls } from "../components/Controls.tsx";
 import { Felt } from "../components/Felt.tsx";
@@ -56,6 +58,14 @@ export function Table({ roomView }: { roomView: RoomView }) {
   }, [actionSeq, lastAction, view.phase]);
   const dismissSummary = useCallback(() => setSummary(null), []);
 
+  // The reveal flips every hand in a wave around the table
+  const revealOrder = view.players.findIndex(player => player.seat === view.you);
+  const flipDelayFor = (player: SeatView, handIndex: number) => {
+    if (view.phase !== "scoring") return 0;
+    const position = (view.players.indexOf(player) - Math.max(0, revealOrder) + view.players.length) % view.players.length;
+    return position * 300 + handIndex * 80;
+  };
+
   const slotsFor = (player: SeatView): HandSlot[] =>
     player.hand.map((card, handIndex) => {
       const target = { seat: player.seat, handIndex };
@@ -68,6 +78,7 @@ export function Table({ roomView }: { roomView: RoomView }) {
         card: peeked && view.peek?.card ? view.peek.card : card,
         selectable: peeked || (click.kind !== "none" && (view.phase === "power_jack" || view.phase === "power_queen" || stackMode)),
         selected: picked,
+        flipDelay: flipDelayFor(player, handIndex),
         onClick: click.kind === "none" ? undefined : () => {
           if (click.kind === "pick") return setJackPick(click.pick);
           actions.move(click.move);
@@ -125,18 +136,26 @@ export function Table({ roomView }: { roomView: RoomView }) {
       />
 
       {showDutchBanner && view.dutch ? (
-        <div className="banner">
+        <motion.div
+          className="banner"
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 320, damping: 18 }}
+        >
           Dutch called by {view.dutch.seat === view.you ? "you" : name(view.dutch.seat)}: one last turn each
-        </div>
+        </motion.div>
       ) : null}
 
-      {lastMove ? <p className="last-move" aria-live="polite">{lastMove}</p> : null}
+      {/* Always rendered, fixed height: an empty or longer line must not move the table */}
+      <p className="last-move" aria-live="polite">
+        <span className="last-move-text" title={lastMove ?? undefined}>{lastMove ?? ""}</span>
+      </p>
 
       <div className="table">
         {opponents.map(({ player, position }) => (
           <div key={player.seat} className={`seat seat-opponent seat-${position}`}>
             {badgeFor(player, false)}
-            <Hand owner={name(player.seat)} slots={slotsFor(player)} />
+            <Hand owner={name(player.seat)} seat={player.seat} slots={slotsFor(player)} />
           </div>
         ))}
 
@@ -157,7 +176,7 @@ export function Table({ roomView }: { roomView: RoomView }) {
             <>
               <div className="self-row">
                 {badgeFor(self, true)}
-                <Hand owner="You" slots={slotsFor(self)} />
+                <Hand owner="You" seat={self.seat} slots={slotsFor(self)} />
               </div>
               <Controls
                 canCallDutch={myTurn && view.phase === "drawing" && view.dutch === null}
@@ -174,6 +193,7 @@ export function Table({ roomView }: { roomView: RoomView }) {
         </div>
       </div>
 
+      <AnimationLayer prev={state.previousView} next={view} />
       {summary ? <RoundSummary summary={summary} nameOf={name} onDismiss={dismissSummary} /> : null}
       {view.phase === "finished" ? (
         <GameOver

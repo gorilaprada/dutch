@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react";
+import { motion } from "motion/react";
+import { FLIGHT_MS } from "../game/animations.ts";
 import { cardLabel, isPowerCard, isRedSuit, rankLabel } from "../game/cards.ts";
 import type { Card } from "../game/protocol.ts";
 
@@ -14,6 +17,10 @@ type PlayingCardProps = {
   // Already picked: the first half of a Jack swap
   selected?: boolean;
   ariaLabel?: string;
+  // Where the animation layer finds this card (see slotKey)
+  slot?: string;
+  // Delay before a face up / face down flip, for the reveal wave
+  flipDelay?: number;
 };
 
 export function PlayingCard({
@@ -25,13 +32,12 @@ export function PlayingCard({
   selectable = false,
   selected = false,
   ariaLabel,
+  slot,
+  flipDelay = 0,
 }: PlayingCardProps) {
   const face = empty ? null : card;
   const classes = [
-    "card",
-    empty ? "card-empty" : face ? "card-face" : "card-facedown",
-    face && isRedSuit(face.suit) ? "card-red" : "",
-    face && isPowerCard(face) ? "card-power" : "",
+    cardClasses(face, empty),
     selectable ? "card-selectable" : "",
     selected ? "card-selected" : "",
     onClick ? "card-clickable" : "",
@@ -45,17 +51,42 @@ export function PlayingCard({
 
   const described = ariaLabel ?? (empty ? emptyLabel || "empty slot" : face ? cardLabel(face) : "face-down card");
 
+  // Flip only when the side changes after the first render, not on mount
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+  }, []);
+  const side = empty ? "empty" : face ? "up" : "down";
+
   return (
-    <div className="card-slot">
-      {onClick
-        ? <button type="button" className={classes} onClick={onClick} aria-label={described}>{body}</button>
-        : <div className={classes} aria-label={described} role="img">{body}</div>}
+    <div className="card-slot" data-slot={slot}>
+      <motion.div
+        key={side}
+        className="card-flip"
+        initial={mounted.current && side !== "empty" ? { rotateY: 90, opacity: 0.4 } : false}
+        animate={{ rotateY: 0, opacity: 1 }}
+        transition={{ duration: FLIGHT_MS / 2000, delay: flipDelay / 1000, ease: "easeOut" }}
+      >
+        {onClick
+          ? <button type="button" className={classes} onClick={onClick} aria-label={described}>{body}</button>
+          : <div className={classes} aria-label={described} role="img">{body}</div>}
+      </motion.div>
       {label === undefined ? null : <span className="card-stack-label">{label}</span>}
     </div>
   );
 }
 
-function FaceContent({ card }: { card: Card }) {
+// The look of a card without any behaviour: shared with the flying ghost cards
+export function cardClasses(face: Card | null, empty = false): string {
+  return [
+    "card",
+    empty ? "card-empty" : face ? "card-face" : "card-facedown",
+    face && isRedSuit(face.suit) ? "card-red" : "",
+    face && isPowerCard(face) ? "card-power" : "",
+  ].filter(Boolean).join(" ");
+}
+
+export function FaceContent({ card }: { card: Card }) {
   const corner = `${rankLabel(card.value)}${card.suit}`;
   return (
     <>
