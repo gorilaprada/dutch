@@ -19,7 +19,7 @@ const socket: Socket<ServerToClientEvents, ClientEvents> = io(); // same origin
 ```
 
 - **Production:** Express serves the built client from `CLIENT_DIR`, and Socket.IO runs on the same host, so no CORS is needed. Any unknown GET returns `index.html`, so client-side routes work.
-- **Dev:** run the server (`pnpm --filter dutch-server dev`, on `:3000`) and the Vite dev server. Then proxy Socket.IO in `client/vite.config.ts`:
+- **Dev:** `pnpm dev` at the repo root runs the server (on `:3000`) and the Vite dev server together. Vite proxies Socket.IO in `client/vite.config.ts`:
 
   ```ts
   export default defineConfig({

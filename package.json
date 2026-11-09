@@ -1,15 +1,24 @@
 {
   "name": "dutchlib",
   "version": "0.1.0",
-  "description": "Dutch card game TS library",
+  "private": true,
+  "description": "Dutch card game: TypeScript rules library, Socket.IO server and React client",
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "packageManager": "pnpm@12.15.0",
   "scripts": {
+    "dev": "pnpm --parallel --filter dutch-server --filter dutch-client dev",
+    "build": "pnpm --filter dutch-client build",
+    "start": "CLIENT_DIR=client/dist pnpm --filter dutch-server start",
     "test": "vitest --run",
-    "test:all": "pnpm test && pnpm -r test"
+    "test:all": "pnpm test && pnpm -r test",
+    "typecheck": "tsc --noEmit -p . && pnpm -r typecheck"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.0.0",
