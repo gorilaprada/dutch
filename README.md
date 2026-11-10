@@ -10,6 +10,8 @@ An online version of Dutch, a memory and bluffing card game for 2–4 players, i
 
 The server runs TypeScript directly with Node's type stripping: only the client has a build step.
 
+<img width="960" height="523" alt="output" src="https://github.com/user-attachments/assets/06970439-db67-494f-9778-960e335a4ad9" />
+
 ## The game in short
 
 - Everyone starts with 50 points and 4 face-down cards, and memorizes two of them at the start of each round.
