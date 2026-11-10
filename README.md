@@ -8,7 +8,7 @@ A real-time, multiplayer online version of Dutch, a memory and bluffing card gam
 
 ## Description
 
-After moving out, I could no longer play Dutch, the card game I used to play with my friends every week. I started building an online version with object-oriented design, but it didn't work well because the game state was scattered across objects, which made the rules hard to follow and slowed every change down. I rebuilt it with data-oriented design: plain, immutable data and pure functions that turn one game state into the next. Now I can add rules, fix bugs and ship features with ease, and my friends (and anyone else) can play together from anywhere.
+I made this game to play with my friends. I started building it with object-oriented design, but it didn't work well because the game state was scattered across objects, which made the rules hard to follow and slowed every change down. I rebuilt it with data-oriented design: plain, immutable data and pure functions that turn one game state into the next. Now I can add rules, fix bugs and ship features with ease, and my friends (and anyone else) can play together from anywhere.
 
 **Highlights**
 
@@ -20,7 +20,7 @@ After moving out, I could no longer play Dutch, the card game I used to play wit
 
 ## Motivation
 
-Dutch is the game my friends and I played together for years. Since moving out a couple of months ago I haven't been able to play with them, so I recreated it and put it online for everyone to play.
+Dutch is a card game I played with my friends often. Since moving out a couple of months ago I haven't been able to play with them, so I recreated it and put it online for everyone to play.
 
 It also turned into my biggest learning project. Switching from OOP to data-oriented design taught me how much simpler code becomes when data and behavior are kept apart: with plain data I could read the whole game state at a glance, which made me much faster. Along the way I also learned to design a client/server protocol, keep secret information on the server, handle reconnects and timers, and deploy and operate a containerized app myself.
 
