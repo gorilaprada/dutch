@@ -1,88 +1,98 @@
 # Dutch
 
-An online version of Dutch, a memory and bluffing card game for 2–4 players, in three parts:
+A real-time, multiplayer online version of Dutch, a memory and bluffing card game for 2–4 players. Built in TypeScript end to end, containerized with Docker and self-hosted on my home server behind a Cloudflare Tunnel.
 
-| Part | Folder | What it is |
-|---|---|---|
-| Rules library | `src/` | Pure TypeScript game logic. Immutable state; every move is a function that returns a new state or an error. No I/O |
-| Server | `server/` | Express 5 + Socket.IO 4. Rooms, sessions and reconnects, timed phases, and one personal view per player (hidden cards never leave the server) |
-| Client | `client/` | React 19 + Vite. Lobby, table, animations (Motion) |
+**▶ Play it live at [playdutch.party](https://playdutch.party)**
 
-The server runs TypeScript directly with Node's type stripping: only the client has a build step.
+<img width="960" height="523" alt="Dutch gameplay" src="https://github.com/user-attachments/assets/06970439-db67-494f-9778-960e335a4ad9" />
 
-<img width="960" height="523" alt="output" src="https://github.com/user-attachments/assets/06970439-db67-494f-9778-960e335a4ad9" />
+## Description
 
-## The game in short
+After moving out, I could no longer play Dutch, the card game I used to play with my friends every week. I started building an online version with object-oriented design, but it didn't work well because the game state was scattered across objects, which made the rules hard to follow and slowed every change down. I rebuilt it with data-oriented design: plain, immutable data and pure functions that turn one game state into the next. Now I can add rules, fix bugs and ship features with ease, and my friends (and anyone else) can play together from anywhere.
 
-- Everyone starts with 50 points and 4 face-down cards, and memorizes two of them at the start of each round.
-- On your turn, draw from the deck or the discard pile, then switch the drawn card into your hand or discard it. A card taken from the discard pile can't go straight back.
-- A Jack you put on the discard pile (discarded or switched out) swaps two cards between two different players; a Queen lets you peek at any card.
-- Any player can stack a card matching the top of the discard pile, once per discard. A wrong stack costs a penalty card.
-- Instead of drawing, call **Dutch**: everyone else gets one last turn, then all hands are revealed.
-- Each player loses the points in their hand (black kings count 0). At 0 points or less you're out. The last player standing wins.
+**Highlights**
 
-## Requirements
+- **Pure rules engine** (`src/`): every move is a function that returns a new state or an error. No I/O, so the whole game is easy to test.
+- **Real-time server** (`server/`): Express 5 + Socket.IO 4 with rooms, sessions, reconnects and timed phases. Each player gets their own view of the game, so hidden cards never leave the server and nobody can cheat by inspecting network traffic.
+- **Animated client** (`client/`): React 19 + Vite + Motion, with card flights, flips, deals and spectator mode.
+- **Tested**: unit tests for the rules, server tests, component tests and end-to-end games against a real server.
+- **Production-ready deployment**: a Docker image that runs as an unprivileged user, has a `/health` check and shuts down cleanly on `SIGTERM`. Self-hosted on my home server and exposed to the internet through Cloudflare Tunnels.
 
-- Node **26** or newer (type stripping)
-- pnpm **12** (`packageManager` in `package.json` pins the exact version)
+## Motivation
 
-## Getting started
+Dutch is the game my friends and I played together for years. Since moving out a couple of months ago I haven't been able to play with them, so I recreated it and put it online for everyone to play.
+
+It also turned into my biggest learning project. Switching from OOP to data-oriented design taught me how much simpler code becomes when data and behavior are kept apart: with plain data I could read the whole game state at a glance, which made me much faster. Along the way I also learned to design a client/server protocol, keep secret information on the server, handle reconnects and timers, and deploy and operate a containerized app myself.
+
+## Quick Start
+
+Requirements: Node **26+** and pnpm **12** (the exact version is pinned in `package.json`).
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-`pnpm dev` starts the server on `:3000` (restarting on save) and Vite on `:5173`, which proxies `/socket.io` to the server. Open http://localhost:5173 in two tabs: each tab is its own player.
+This starts the server on `:3000` and the client on http://localhost:5173. Open it in two tabs: each tab is its own player.
 
-## Scripts
-
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Server and client in watch mode |
-| `pnpm test` | Rules library tests |
-| `pnpm test:all` | Library, server and client tests (the client suite includes end-to-end games against a real server) |
-| `pnpm typecheck` | Type-checks all three packages |
-| `pnpm build` | Type-checks and builds the client into `client/dist` |
-| `pnpm start` | Production: one process serves `client/dist` and the sockets on `:3000` |
-
-## Production
-
-```sh
-pnpm build
-pnpm start
-```
-
-### Docker
+Or run the production build with Docker:
 
 ```sh
 docker build -t dutch .
 docker run -p 3000:3000 dutch
 ```
 
-The image runs as the unprivileged `node` user, has a health check on `/health`, and shuts down cleanly on `SIGTERM` (timers stopped, sockets closed).
+Then open http://localhost:3000.
 
-### Environment
+## Usage
+
+### How to play
+
+- Everyone starts with 50 points and 4 face-down cards, and memorizes two of them at the start of each round.
+- On your turn, draw from the deck or the discard pile, then switch the drawn card into your hand or discard it. A card taken from the discard pile can't go straight back.
+- A Jack put on the discard pile swaps two cards between two different players; a Queen lets you peek at any card.
+- Any player can stack a card matching the top of the discard pile, once per discard. A wrong stack costs a penalty card.
+- Instead of drawing, call **Dutch**: everyone else gets one last turn, then all hands are revealed.
+- Each player loses the points in their hand (black kings count 0). At 0 points or less you're out. The last player standing wins.
+
+### Scripts
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Server and client in watch mode |
+| `pnpm test` | Rules library tests |
+| `pnpm test:all` | Library, server and client tests, including end-to-end games |
+| `pnpm typecheck` | Type-checks all three packages |
+| `pnpm build` | Builds the client into `client/dist` |
+| `pnpm start` | Production: one process serves the client and the sockets on `:3000` |
+
+### Configuration
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `PORT` | `3000` | HTTP and Socket.IO port |
 | `HOST` | `0.0.0.0` | Interface to listen on |
-| `CLIENT_DIR` | unset (`client/dist` in `pnpm start` and Docker) | Built client to serve. A relative path is resolved from the repo root. Unset = API only, as in `pnpm dev` |
+| `CLIENT_DIR` | `client/dist` in `pnpm start` and Docker | Built client to serve. Unset = API only |
 
-Game state lives in memory: restarting the server ends every game in progress, and one process serves all rooms.
+Game state lives in memory, so restarting the server ends every game in progress.
 
-## Repository layout
+## Contributing
+
+Contributions are welcome! Open an issue to report a bug or suggest a feature, or send a pull request.
+
+1. Fork the repo and create a branch.
+2. Make your change and add tests for it.
+3. Run `pnpm typecheck` and `pnpm test:all` before opening the PR.
+
+Where things live:
 
 ```
-src/              rules library (entrypoint.ts: applyMove, parseMove, viewFor)
-tests/            library tests
-server/src/       app.ts, handlers.ts (events), rooms.ts, timers.ts, protocol.ts (types for clients)
+src/                rules library (entrypoint.ts: applyMove, parseMove, viewFor)
+tests/              rules library tests
+server/src/         app, event handlers, rooms, timers, protocol types
 server/PROTOCOL.md  the client ↔ server contract
-client/src/       game/ (store, socket, selectors, animations), components/, screens/, styles/
-client/tests/     component tests (fake socket) and end-to-end flows (real server)
+client/src/         game state, components, screens, styles
+client/tests/       component tests and end-to-end flows
 ```
 
-## Further reading
-
-- [`server/PROTOCOL.md`](server/PROTOCOL.md): events, views, what each player can see, sessions and reconnects, errors.
+[`server/PROTOCOL.md`](server/PROTOCOL.md) documents every event, what each player can see, sessions, reconnects and errors.
