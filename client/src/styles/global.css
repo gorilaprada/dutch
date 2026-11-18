@@ -956,3 +956,94 @@ button.card-clickable:hover {
 .card-lift {
   box-shadow: var(--card-lift), var(--glow-cyan);
 }
+
+/* ---------- How to play (landing) ---------- */
+
+.how-to {
+  max-width: 560px;
+  --card-w: 60px;
+}
+
+.how-to-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.how-to-summary::-webkit-details-marker { display: none; }
+
+.how-to-summary::after {
+  content: "+";
+  font-family: var(--font-mono);
+  font-size: 28px;
+  color: var(--gold-400);
+}
+
+.how-to[open] > .how-to-summary::after { content: "–"; }
+
+.how-to[open] > .how-to-summary { margin-bottom: var(--space-4); }
+
+.how-to > :not(summary) + :not(summary) { margin-top: var(--space-6); }
+
+.how-to-text {
+  color: var(--cream-100);
+  font-size: 15px;
+  line-height: 22px;
+  margin: 0;
+}
+
+.how-to-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.how-to-cards {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: var(--space-2);
+}
+
+.how-to-accent { color: var(--gold-400); }
+.how-to-dutch { color: var(--magenta-500); }
+
+.how-to-powers {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.how-to-power {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.how-to-steps {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Small demo cards: lift the POWER tag clear of the corner rank */
+.how-to .card-tag {
+  top: -18px;
+  font-size: 9px;
+  padding: 1px 6px;
+}
+
+.how-to-powers { padding-top: var(--space-4); gap: var(--space-6); }
+
+.how-to .hint { text-align: left; }
+
+/* The black King's 0 is the lesson of the row */
+.how-to-cards .card-slot:last-child .card-stack-label { color: var(--gold-400); }

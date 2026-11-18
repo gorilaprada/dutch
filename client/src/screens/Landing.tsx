@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { ActionButton } from "../components/ActionButton.tsx";
+import { HowToPlay } from "../components/HowToPlay.tsx";
 import { useGame } from "../game/useGame.ts";
 
 const MAX_NAME = 20; // same limit as the server
@@ -30,7 +31,7 @@ export function Landing() {
     else actions.joinRoom(code, trimmedName);
   };
 
-  const onSubmit = (event: FormEvent) => {
+  const onSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     submit();
   };
@@ -92,6 +93,8 @@ export function Landing() {
               : "Ask the host for the 4-character code or link."}
         </p>
       </form>
+
+      <HowToPlay />
     </div>
   );
 }

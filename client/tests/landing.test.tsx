@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderApp } from "./render.tsx";
 
@@ -40,5 +40,16 @@ describe("Landing", () => {
     await userEvent.type(screen.getByPlaceholderText("K7P9"), "9");
     expect(screen.getByPlaceholderText("K7P9")).toHaveValue("K7P9");
     expect(button).toBeEnabled();
+  });
+
+  test("How to play shows card values and the power cards", () => {
+    renderApp();
+    const values = screen.getByRole("region", { name: "Card values" });
+    expect(within(values).getByRole("img", { name: "K♤" }).closest(".card-slot")).toHaveTextContent("0 pts");
+    expect(within(values).getByRole("img", { name: "K♢" }).closest(".card-slot")).toHaveTextContent("13 pts");
+
+    const powers = screen.getByRole("region", { name: "Special cards" });
+    expect(within(powers).getByRole("img", { name: "J♢" })).toHaveClass("card-power");
+    expect(within(powers).getByRole("img", { name: "Q♤" })).toHaveClass("card-power");
   });
 });
