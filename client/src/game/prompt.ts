@@ -11,6 +11,7 @@ export function promptFor(roomView: RoomView, jackPick: Pick | null, stackMode: 
   const act = (text: string): Prompt => ({ text, idle: false });
   const wait = (text: string): Prompt => ({ text, idle: true });
 
+  if (roomView.roundBreak) return wait("Round over: check the scores.");
   if (phase === "scoring") return wait("Round over: revealing hands…");
   if (phase === "finished") return wait("The game is over.");
   if (phase === "memorizing") return isSpectator(roomView) ? wait("Players are memorizing their cards…") : act("Memorize your two cards.");

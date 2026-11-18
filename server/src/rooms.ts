@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { initGameState, type GameState } from "../../src/entrypoint.ts";
+import { initGameState, type GameState, type RoundScore } from "../../src/entrypoint.ts";
 import type { RoomTimer } from "./timers.ts";
 
 // 0/O and 1/I are left out so a code stays unambiguous when read aloud
@@ -15,11 +15,20 @@ export type Session = {
   grace: { deadline: number; handle: ReturnType<typeof setTimeout> } | null;
 };
 
+// Between two rounds the lib has already dealt the next one (countPoints does
+// both). The server holds it back so players can read their scores first
+export type RoundBreak = {
+  next: GameState; // the dealt next round, sent when the break ends
+  summary: readonly RoundScore[];
+  ready: Set<number>; // seats that clicked READY FOR NEXT ROUND
+};
+
 export type Room = {
   code: string;
-  state: GameState;
+  state: GameState; // during a round break: still the scoring reveal
   sessions: Map<string, Session>; // token -> session
   timer: RoomTimer | null;
+  roundBreak: RoundBreak | null;
 };
 
 export type RoomRegistry = Map<string, Room>;
@@ -28,7 +37,7 @@ export function createRoom(rooms: RoomRegistry): Room {
   let code = randomCode();
   while (rooms.has(code)) code = randomCode();
 
-  const room: Room = { code, state: initGameState(), sessions: new Map(), timer: null };
+  const room: Room = { code, state: initGameState(), sessions: new Map(), timer: null, roundBreak: null };
   rooms.set(code, room);
   return room;
 }

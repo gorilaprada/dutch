@@ -31,6 +31,7 @@ export function roomView(overrides: {
     watchers: overrides.watchers ?? [],
     eliminated: [],
     deadline: null,
+    roundBreak: null,
     view: {
       you: overrides.you === undefined ? 0 : overrides.you,
       players,
@@ -61,6 +62,7 @@ export function tableView(overrides: {
   players?: SeatView[];
   view?: Partial<RoomView["view"]>;
   deadline?: number | null;
+  roundBreak?: RoomView["roundBreak"];
 } = {}): RoomView {
   const base = roomView({
     you: overrides.you,
@@ -73,6 +75,7 @@ export function tableView(overrides: {
   return {
     ...base,
     deadline: overrides.deadline ?? null,
+    roundBreak: overrides.roundBreak ?? null,
     view: {
       ...base.view,
       turnIndex: overrides.turnIndex ?? 0,

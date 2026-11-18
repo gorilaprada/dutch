@@ -1,16 +1,20 @@
 import type { Phase } from "../game/protocol.ts";
 import { ActionButton } from "./ActionButton.tsx";
 
-const COUNTDOWN_LABEL: Partial<Record<Phase, string>> = {
+// roundBreak: the server's pause between rounds, while the scores are up
+type Step = Phase | "roundBreak";
+
+const COUNTDOWN_LABEL: Partial<Record<Step, string>> = {
   memorizing: "Memorize",
   peeking: "Peek",
   scoring: "Reveal",
+  roundBreak: "Next round",
 };
 
 type TableHeaderProps = {
   code: string;
   turn: string; // YOU or a name
-  phase: Phase;
+  phase: Step;
   secondsLeft: number | null;
   onLeave: () => void;
 };

@@ -24,28 +24,38 @@ describe("round end", () => {
     expect(screen.getByText("Round over: revealing hands…")).toBeInTheDocument();
   });
 
-  test("a scored round opens the summary once", async () => {
-    const { fire } = renderApp();
-    enterRoom(fire, tableView());
-    fire("view", tableView({ phase: "memorizing", view: { lastAction: { type: "countPoints", summary }, actionSeq: 7 } }));
+  test("the round break shows the scores, the countdown and a ready button", async () => {
+    const { fire, emitted } = renderApp();
+    enterRoom(fire, tableView({ phase: "scoring", deadline: Date.now() + 9500, roundBreak: { summary, ready: [] } }));
 
     const panel = screen.getByRole("status", { name: "Round summary" });
     expect(within(panel).getByText("−50")).toBeInTheDocument();
     expect(within(panel).getByText("Bob is out!")).toBeInTheDocument();
+    expect(within(panel).getByText("Next round in 10s")).toBeInTheDocument();
+    expect(screen.getByText("Round over: check the scores.")).toBeInTheDocument();
 
-    await userEvent.click(within(panel).getByRole("button", { name: "DISMISS" }));
-    expect(screen.queryByRole("status", { name: "Round summary" })).toBeNull();
+    await userEvent.click(within(panel).getByRole("button", { name: "READY FOR NEXT ROUND" }));
+    expect(emitted.at(-1)).toEqual({ event: "nextRoundReady", payload: undefined });
+  });
 
-    // The same result arrives again (e.g. someone reconnected): stays closed
-    fire("view", tableView({ phase: "memorizing", view: { lastAction: { type: "countPoints", summary }, actionSeq: 7 } }));
+  test("once ready: who is ready, how many, and the next deal closes the summary", () => {
+    const { fire } = renderApp();
+    const alive = [summary[0]!, { seat: 1, pointsLost: 10, score: 40, eliminated: false }];
+    enterRoom(fire, tableView({ phase: "scoring", roundBreak: { summary: alive, ready: [0] } }));
+
+    const panel = screen.getByRole("status", { name: "Round summary" });
+    expect(within(panel).getByRole("button", { name: "WAITING… 1/2 READY" })).toBeDisabled();
+    expect(within(panel).getAllByLabelText("ready")).toHaveLength(1);
+
+    fire("view", tableView({ phase: "memorizing", view: { lastAction: { type: "countPoints", summary: alive }, actionSeq: 8 } }));
     expect(screen.queryByRole("status", { name: "Round summary" })).toBeNull();
   });
 
-  test("the summary survives the next round's actions", () => {
+  test("an eliminated player gets no ready button", () => {
     const { fire } = renderApp();
-    enterRoom(fire, tableView({ phase: "memorizing", view: { lastAction: { type: "countPoints", summary }, actionSeq: 7 } }));
-    fire("view", tableView({ view: { lastAction: { type: "endMemorizing" }, actionSeq: 8 } }));
-    expect(screen.getByRole("status", { name: "Round summary" })).toBeInTheDocument();
+    enterRoom(fire, tableView({ you: null, phase: "scoring", roundBreak: { summary, ready: [] } }), 1);
+    const panel = screen.getByRole("status", { name: "Round summary" });
+    expect(within(panel).queryByRole("button")).toBeNull();
   });
 
   test("finished shows the winner, the scores and a rematch", async () => {

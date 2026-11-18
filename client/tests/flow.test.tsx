@@ -45,7 +45,7 @@ async function dealtGame(timings: GameServerOptions["timings"]) {
   await waitFor(() => expect(screen.getByRole("button", { name: "DEAL THE ROUND" })).toBeEnabled());
   await userEvent.click(screen.getByRole("button", { name: "DEAL THE ROUND" }));
 
-  return { server, container, code };
+  return { server, container, code, bob };
 }
 
 test("create, join, ready, deal, memorize, then draw and play a card", async () => {
@@ -76,7 +76,8 @@ test("create, join, ready, deal, memorize, then draw and play a card", async () 
 }, 15_000);
 
 test("a round end reveals the hands, shows the summary and deals the next round", async () => {
-  const { server, code } = await dealtGame({ memorizeMs: 300, scoringMs: 600 });
+  // A long break: only the two ready clicks can deal the next round in time
+  const { server, code, bob } = await dealtGame({ memorizeMs: 300, scoringMs: 600, roundBreakMs: 60_000 });
   await screen.findByText(/^Your turn/, {}, { timeout: 4000 });
 
   // Force the round end on the server, as if Dutch had come back around.
@@ -90,9 +91,14 @@ test("a round end reveals the hands, shows the summary and deals the next round"
   await screen.findByText("Round over: revealing hands…");
   expect(screen.queryAllByLabelText(/face down/)).toHaveLength(0);
 
-  // countPoints: the summary floats over the next deal
+  // countPoints: the scores stay up until both players are ready
   const panel = await screen.findByRole("status", { name: "Round summary" }, { timeout: 3000 });
   expect(within(panel).getByText("Ana")).toBeInTheDocument();
   expect(within(panel).getByText("Bob")).toBeInTheDocument();
+  await userEvent.click(within(panel).getByRole("button", { name: "READY FOR NEXT ROUND" }));
+  await screen.findByRole("button", { name: "WAITING… 1/2 READY" });
+
+  bob.emit("nextRoundReady");
   await screen.findByText("Memorize your two cards.");
+  expect(screen.queryByRole("status", { name: "Round summary" })).toBeNull();
 }, 15_000);

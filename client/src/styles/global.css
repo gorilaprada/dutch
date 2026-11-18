@@ -1061,3 +1061,8 @@ button.card-clickable:hover {
   line-height: 22px;
   text-shadow: 0 0 12px rgba(255, 69, 87, 0.45);
 }
+
+.summary-ready {
+  color: var(--cyan-400);
+  font-weight: 700;
+}

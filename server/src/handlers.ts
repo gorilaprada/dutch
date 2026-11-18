@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Server, Socket } from "socket.io";
-import { applyMove, initGameState, parseMove, viewFor, type GameState } from "../../src/entrypoint.ts";
+import { applyMove, initGameState, parseMove, viewFor, type GameState, type Move } from "../../src/entrypoint.ts";
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -8,7 +8,7 @@ import type {
   SocketData,
 } from "./events.ts";
 import { createRoom, findRoom, clearGrace, type Room, type RoomRegistry, type Session } from "./rooms.ts";
-import { schedule, clearTimer, type Timings } from "./timers.ts";
+import { schedule, clearTimer, type TimerEnd, type Timings } from "./timers.ts";
 
 export type DutchServer = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 type DutchSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
@@ -85,14 +85,29 @@ export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void 
     // Joining goes through createRoom / joinRoom so the server can store the name
     if (move.type === "addPlayer") return socket.emit("moveError", "Use joinRoom to join");
 
+    if (move.type === "leave") {
+      leaveGame(room, move.seat);
+      detach(socket, room);
+      endSession(ctx, room, session);
+      return commit(ctx, room);
+    }
+    if (room.roundBreak) return socket.emit("moveError", "The next round is about to start");
+
     const result = applyMove(room.state, move, Math.random);
     if (!result.ok) return socket.emit("moveError", result.error);
     room.state = result.state;
+    commit(ctx, room);
+  });
 
-    if (move.type === "leave") {
-      detach(socket, room);
-      endSession(ctx, room, session);
-    }
+  // READY FOR NEXT ROUND: once every connected player is ready, the break ends early
+  socket.on("nextRoundReady", () => {
+    const room = roomOf(rooms, socket);
+    const session = sessionOf(room, socket);
+    if (!room || !session) return socket.emit("roomError", "Join or create a room first");
+    if (!room.roundBreak) return socket.emit("roomError", "No round to get ready for");
+    if (!isPlaying(room, session)) return socket.emit("roomError", "Only players in the next round can get ready");
+
+    room.roundBreak.ready.add(session.seat!);
     commit(ctx, room);
   });
 
@@ -132,7 +147,7 @@ export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void 
     // Seats are only held once a game is running and the player is in it.
     // Spectators (watchers, eliminated) get no grace
     const seat = session.seat;
-    const inGame = seat !== null && room.state.players.has(seat);
+    const inGame = seat !== null && gameOf(room).players.has(seat);
     if (room.state.phase === "lobby" || !inGame) {
       if (inGame) leaveGame(room, seat);
       endSession(ctx, room, session);
@@ -150,10 +165,13 @@ export function registerHandlers(ctx: ServerContext, socket: DutchSocket): void 
 export function commit(ctx: ServerContext, room: Room): void {
   // A deleted room must not restart a timer
   if (ctx.rooms.get(room.code) !== room) return clearTimer(room);
+  // Checked on every change: a ready click, but also a leave or a disconnect
+  // can leave only ready players
+  if (everyoneReady(room)) endRoundBreak(room);
 
-  schedule(room, ctx.timings, move => {
-    const result = applyMove(room.state, move, Math.random);
-    if (result.ok) room.state = result.state;
+  schedule(room, ctx.timings, end => {
+    if (end.type === "endRoundBreak") endRoundBreak(room);
+    else applyTimed(room, end);
     commit(ctx, room);
   });
   broadcast(ctx.io, room);
@@ -173,15 +191,19 @@ export function broadcast(io: DutchServer, room: Room): void {
   const watchers = sessions.filter(s => s.seat === null).map(s => s.name);
   const eliminated = room.state.phase === "lobby"
     ? []
-    : seated.filter(s => !room.state.players.has(s.seat)).map(s => s.seat).sort((a, b) => a - b);
+    : seated.filter(s => !gameOf(room).players.has(s.seat)).map(s => s.seat).sort((a, b) => a - b);
   const deadline = room.timer?.deadline ?? null;
+  const roundBreak = room.roundBreak
+    ? { summary: room.roundBreak.summary, ready: [...room.roundBreak.ready].sort((a, b) => a - b) }
+    : null;
 
   for (const id of socketIds) {
     const socket = io.sockets.sockets.get(id);
     if (!socket) continue;
 
     const seat = socket.data.seat;
-    const viewer = seat !== undefined && room.state.players.has(seat) ? seat : null;
+    // Eliminated during a round break: already watching, like after the deal
+    const viewer = seat !== undefined && room.state.players.has(seat) && gameOf(room).players.has(seat) ? seat : null;
     const result = viewFor(room.state, viewer);
     if (result.ok) {
       socket.emit("view", {
@@ -193,6 +215,7 @@ export function broadcast(io: DutchServer, room: Room): void {
         eliminated,
         view: result.view,
         deadline,
+        roundBreak,
       });
     }
   }
@@ -293,9 +316,54 @@ function startGrace(ctx: ServerContext, room: Room, session: Session): void {
   session.grace = { deadline: Date.now() + ms, handle };
 }
 
+// During a round break the player leaves the held next round as well
 function leaveGame(room: Room, seat: number): void {
-  const result = applyMove(room.state, { type: "leave", seat }, Math.random);
+  const leave: Move = { type: "leave", seat };
+  const result = applyMove(room.state, leave, Math.random);
   if (result.ok) room.state = result.state;
+
+  const pause = room.roundBreak;
+  if (!pause) return;
+  const next = applyMove(pause.next, leave, Math.random);
+  if (next.ok) pause.next = next.state;
+  pause.ready.delete(seat);
+  // Fewer than 2 players left: there is no next round, the game is over now
+  if (pause.next.phase === "finished") endRoundBreak(room);
+}
+
+// A timer ran out. A scored round that goes on starts the round break: the
+// lib already dealt the next round, it waits in roundBreak until the break ends
+function applyTimed(room: Room, move: Exclude<TimerEnd, { type: "endRoundBreak" }>): void {
+  const result = applyMove(room.state, move, Math.random);
+  if (!result.ok) return;
+  const action = result.state.lastAction;
+  if (action?.type === "countPoints" && result.state.phase !== "finished") {
+    room.roundBreak = { next: result.state, summary: action.summary, ready: new Set() };
+  } else {
+    room.state = result.state;
+  }
+}
+
+function endRoundBreak(room: Room): void {
+  if (!room.roundBreak) return;
+  room.state = room.roundBreak.next;
+  room.roundBreak = null;
+}
+
+// Every connected player of the next round clicked ready. Disconnected ones
+// don't block: the break timer still runs out for them
+function everyoneReady(room: Room): boolean {
+  const pause = room.roundBreak;
+  if (!pause) return false;
+  const connected = [...room.sessions.values()]
+    .filter(s => s.seat !== null && s.socketId !== null && pause.next.players.has(s.seat))
+    .map(s => s.seat!);
+  return connected.length > 0 && connected.every(seat => pause.ready.has(seat));
+}
+
+// Who is in the game: during a round break, the players of the next round
+function gameOf(room: Room): GameState {
+  return room.roundBreak?.next ?? room.state;
 }
 
 // The room lives as long as it has sessions, disconnected ones included
@@ -312,7 +380,7 @@ function endSession(ctx: ServerContext, room: Room, session: Session): void {
 
 // Seated and still in the lib's game (not a watcher, not eliminated)
 function isPlaying(room: Room, session: Session): boolean {
-  return session.seat !== null && room.state.players.has(session.seat);
+  return session.seat !== null && gameOf(room).players.has(session.seat);
 }
 
 function roomOf(rooms: RoomRegistry, socket: DutchSocket): Room | undefined {

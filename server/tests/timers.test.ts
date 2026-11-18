@@ -7,7 +7,7 @@ const MS = 40;
 let harness: Awaited<ReturnType<typeof startServer>>;
 
 beforeEach(async () => {
-  harness = await startServer({ timings: { memorizeMs: MS, peekMs: MS, scoringMs: MS } });
+  harness = await startServer({ timings: { memorizeMs: MS, peekMs: MS, scoringMs: MS, roundBreakMs: MS } });
 });
 
 afterEach(async () => {
@@ -53,11 +53,12 @@ describe("timers", () => {
     expect((await bobTurn).view.lastAction).toEqual({ type: "endPeek", seat: 0 });
   });
 
-  test("scoring reveals every hand, then the next round is dealt", async () => {
+  test("scoring reveals every hand, a round break shows the scores, then the next round is dealt", async () => {
     const { ana, code } = await drawingGame();
     const room = roomOf(code);
 
     const scoring = viewWhere(ana, v => v.view.phase === "scoring");
+    const roundBreak = viewWhere(ana, v => v.roundBreak !== null);
     const nextRound = viewWhere(ana, v => v.view.phase === "memorizing");
     room.state = { ...room.state, phase: "scoring" };
     commit(harness.server.ctx, room);
@@ -65,8 +66,17 @@ describe("timers", () => {
     const reveal = await scoring;
     expect(reveal.view.players.every(p => p.hand.every(c => c !== null))).toBe(true);
     expect(reveal.deadline).not.toBeNull();
+    expect(reveal.roundBreak).toBeNull();
+
+    // The table stays on the reveal while the scores are up
+    const pause = await roundBreak;
+    expect(pause.view.phase).toBe("scoring");
+    expect(pause.roundBreak?.summary.map(r => r.seat)).toEqual([0, 1]);
+    expect(pause.roundBreak?.ready).toEqual([]);
+    expect(pause.deadline).not.toBeNull();
 
     const round = await nextRound;
+    expect(round.roundBreak).toBeNull();
     expect(round.view.lastAction?.type).toBe("countPoints");
     expect(round.view.players.every(p => p.hand.length === 4)).toBe(true);
   });

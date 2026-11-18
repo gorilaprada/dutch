@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { AnimationLayer } from "../components/AnimationLayer.tsx";
 import { ConfirmLeave } from "../components/ConfirmLeave.tsx";
@@ -12,7 +12,7 @@ import { TableHeader } from "../components/TableHeader.tsx";
 import { cardClick, pileClick, type Pick } from "../game/clicks.ts";
 import { describeAction } from "../game/describe.ts";
 import { promptFor } from "../game/prompt.ts";
-import type { RoomView, RoundScore, SeatView } from "../game/protocol.ts";
+import type { RoomView, SeatView } from "../game/protocol.ts";
 import { handTotal } from "../game/scoring.ts";
 import { isMyTurn, me, nameOf, seatsAroundTable } from "../game/selectors.ts";
 import { useCountdown } from "../game/useCountdown.ts";
@@ -24,7 +24,6 @@ export function Table({ roomView }: { roomView: RoomView }) {
   const [jackPick, setJackPick] = useState<Pick | null>(null);
   const [stackMode, setStackMode] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const [summary, setSummary] = useState<readonly RoundScore[] | null>(null);
 
   const { view } = roomView;
   const self = me(roomView);
@@ -46,17 +45,13 @@ export function Table({ roomView }: { roomView: RoomView }) {
     if (!deciding || !view.canStack) setStackMode(false);
   }, [deciding, view.canStack]);
 
-  // A new round result opens the summary. Kept in state: the next round's
-  // actions replace lastAction long before the summary closes
-  // Keyed on actionSeq: views repeat lastAction, a dismissed summary must stay closed
-  const { lastAction, actionSeq } = view;
-  const shownSeq = useRef<number | null>(null);
-  useEffect(() => {
-    if (lastAction?.type !== "countPoints" || view.phase === "finished" || shownSeq.current === actionSeq) return;
-    shownSeq.current = actionSeq;
-    setSummary(lastAction.summary);
-  }, [actionSeq, lastAction, view.phase]);
-  const dismissSummary = useCallback(() => setSummary(null), []);
+  // The server holds the next deal back while the scores are up
+  const { lastAction } = view;
+  const roundBreak = roomView.roundBreak;
+  // The early start waits on connected players of the next round only
+  const waitingOn = roundBreak
+    ? roundBreak.summary.filter(result => !result.eliminated && roomView.connected[result.seat]).map(result => result.seat)
+    : [];
 
   // The reveal flips every hand in a wave around the table
   const revealOrder = view.players.findIndex(player => player.seat === view.you);
@@ -130,7 +125,7 @@ export function Table({ roomView }: { roomView: RoomView }) {
       <TableHeader
         code={roomView.code}
         turn={myTurn ? "YOU" : name(view.turnIndex).toUpperCase()}
-        phase={view.phase}
+        phase={roundBreak ? "roundBreak" : view.phase}
         secondsLeft={secondsLeft}
         onLeave={() => setConfirmLeave(true)}
       />
@@ -194,7 +189,17 @@ export function Table({ roomView }: { roomView: RoomView }) {
       </div>
 
       <AnimationLayer prev={state.previousView} next={view} />
-      {summary ? <RoundSummary summary={summary} nameOf={name} onDismiss={dismissSummary} /> : null}
+      {roundBreak ? (
+        <RoundSummary
+          summary={roundBreak.summary}
+          ready={roundBreak.ready}
+          waitingOn={waitingOn}
+          you={mySeat}
+          secondsLeft={secondsLeft}
+          nameOf={name}
+          onReady={actions.readyNextRound}
+        />
+      ) : null}
       {view.phase === "finished" ? (
         <GameOver
           winners={view.players.map(player => player.seat)}

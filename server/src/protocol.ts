@@ -37,4 +37,5 @@ export type ClientEvents = {
   move: (move: ClientMove) => void;
   sit: () => void;
   rematch: () => void;
+  nextRoundReady: () => void;
 };

@@ -48,6 +48,7 @@ Socket.IO doesn't buffer events. Some actions answer with two events back to bac
 | `move` | `ClientMove` | Any game move (see below). Never include a seat |
 | `sit` | none | A watcher takes a free seat. Lobby only |
 | `rematch` | none | Starts a new game in the same room. Only when the phase is `finished` |
+| `nextRoundReady` | none | READY FOR NEXT ROUND during a round break. Only players of the next round |
 
 **`ClientMove`:**
 - `{ type: "ready" }`
@@ -83,7 +84,8 @@ The server works out your seat from your session. The timed moves (end of memori
   watchers: string[];                   // names of watch-only people
   eliminated: seat[];                   // seats that are out, now spectating
   view: PlayerView;                     // the game, as YOU may see it
-  deadline: number | null;              // epoch ms when the current timed phase ends
+  deadline: number | null;              // epoch ms when the current timed phase (or round break) ends
+  roundBreak: { summary: RoundScore[]; ready: seat[] } | null; // between rounds, see rule 7
 }
 ```
 
@@ -136,7 +138,10 @@ Spectators see what an opponent sees: nothing during play, and everything during
 6. **Dutch:** every other player gets one more turn. When it's the caller's turn again, the phase becomes `scoring`.
 7. **`scoring`:** all hands are face up for about 5 s (`deadline`).
    - Then `lastAction` becomes `{ type: "countPoints", summary }`, with one `RoundScore` per player: `{ seat, pointsLost, score, eliminated }`. Black kings count 0, and every other card counts its value.
-   - If 2 or more players are left, the next round is dealt straight away (back to `memorizing`), and the player who lost the fewest points starts.
+   - If 2 or more players are left, a **round break** starts: `roundBreak` carries the `summary` and the seats that sent `nextRoundReady`, and `deadline` is about 10 s away. The view stays on the `scoring` reveal, and every move except `leave` is refused.
+   - The break ends when the timer runs out, or as soon as every **connected** player of the next round is ready (disconnected players don't hold it up). Then `roundBreak` is `null`, the next round is dealt (back to `memorizing`, with `lastAction` still `countPoints`), and the player who lost the fewest points starts.
+   - If a leave during the break leaves one player, the game goes straight to `finished`.
+   - Eliminated players are listed in `eliminated` as soon as the break starts, and get the spectator view.
 8. **`finished`:** shown when one player is left. Anyone can send `rematch`, which seats everyone connected (up to 4) in a fresh lobby. Each person's new seat arrives in `roomJoined`.
 
 ## Sessions and reconnecting

@@ -10,6 +10,7 @@ export type GameActions = {
   move: (move: ClientMove) => void;
   sit: () => void;
   rematch: () => void;
+  readyNextRound: () => void;
   leave: () => void;
   dismissNotice: (id: number) => void;
 };
@@ -73,6 +74,7 @@ export function GameProvider({ socket, children }: { socket: GameSocket; childre
     move: move => socket.emit("move", move),
     sit: () => socket.emit("sit"),
     rematch: () => socket.emit("rematch"),
+    readyNextRound: () => socket.emit("nextRoundReady"),
     // The server sends nothing back to a socket that left, so forget it here
     leave: () => {
       socket.emit("move", { type: "leave" });
