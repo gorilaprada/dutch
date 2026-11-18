@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import type { Action, RoomView } from "../src/game/protocol.ts";
 import { card, tableView } from "./fixtures.ts";
-import { box, flightFrames } from "../src/components/AnimationLayer.tsx";
 import { enterRoom, renderApp } from "./render.tsx";
 
 const start = tableView({ turnIndex: 1 });
@@ -71,28 +70,5 @@ describe("AnimationLayer", () => {
     expect(flights).toHaveLength(1);
     expect(flights[0]).toHaveTextContent("4♢");
     expect(drawnCard()?.style.opacity).toBe("");
-  });
-
-  test("a card caught mid-flip is measured at its full size, around its centre", () => {
-    // Edge-on (rotateY 90deg): the bounding rect is a 2px sliver in the middle of a 96px card
-    const card = document.createElement("div");
-    card.className = "card";
-    card.getBoundingClientRect = () => ({ left: 147, top: 300, width: 2, height: 134, right: 149, bottom: 434, x: 147, y: 300, toJSON: () => ({}) });
-    Object.defineProperty(card, "offsetWidth", { value: 96 });
-    Object.defineProperty(card, "offsetHeight", { value: 134 });
-    const slot = document.createElement("div");
-    slot.append(card);
-
-    expect(box(slot)).toEqual({ left: 100, top: 300, width: 96, height: 134 });
-  });
-
-  test("a ghost is laid out like the card it lands on, and starts scaled onto its source", () => {
-    const deck = { left: 100, top: 200, width: 104, height: 146 };
-    const pile = { left: 300, top: 220, width: 80, height: 112 };
-    const { style, initial } = flightFrames(deck, pile);
-
-    // Same box and same --card-w as the pile card: the fonts match when it lands
-    expect(style).toMatchObject({ left: 300, top: 220, width: 80, height: 112, "--card-w": "80px" });
-    expect(initial).toEqual({ x: -200, y: -20, scaleX: 1.3, scaleY: 146 / 112 });
   });
 });

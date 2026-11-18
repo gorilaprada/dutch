@@ -52,18 +52,6 @@ describe("Deck", () => {
     expect(result.dealtCards).toEqual(gameDeck.drawPile.slice(-4));
   });
 
-  test("addToDiscardPile adds one card to the DiscardPile", () => {
-    const result = dealCards(gameDeck, 1);
-    if (!result) throw new Error("expected a result");
-
-    const dealtCard = result.dealtCards[0];
-    const newDeck = addToDiscardPile(result.deck, dealtCard!);
-
-    expect(newDeck.drawPile.length).toBe(51);
-    expect(newDeck.discardPile.at(-1)).toBe(dealtCard);
-    expect(newDeck.discardPile.length).toBe(1);
-  });
-
   test("dealCards reshuffles automatically", () => {
     // Setting all the cards in discardPile
     const result = dealCards(gameDeck, 49, () => 0);

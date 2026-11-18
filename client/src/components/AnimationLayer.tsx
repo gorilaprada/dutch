@@ -101,7 +101,7 @@ function measure(slot: SlotRef): Box | null {
 // The ghost is laid out exactly like the card it lands on: same box, same
 // --card-w, so its fonts match. It starts transformed onto the source card and
 // moves with transforms only, so the text scales with the card the whole way
-export function flightFrames(from: Box, to: Box) {
+function flightFrames(from: Box, to: Box) {
   return {
     style: {
       left: to.left,
@@ -123,7 +123,7 @@ export function flightFrames(from: Box, to: Box) {
 // The card's untransformed size around its on-screen centre. A card that just
 // changed side mounts mid-flip (rotateY 90deg): its bounding rect is a sliver,
 // but a Y flip keeps the centre, and offset sizes ignore transforms
-export function box(element: HTMLElement): Box {
+function box(element: HTMLElement): Box {
   const card = element.querySelector<HTMLElement>(".card") ?? element;
   const rect = card.getBoundingClientRect();
   const width = card.offsetWidth || rect.width;
