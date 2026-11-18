@@ -62,6 +62,10 @@ export function HowToPlay() {
           <li>Anyone can <strong>stack</strong> a matching card on a fresh discard. A wrong stack costs a penalty card.</li>
           <li>Think your hand is lowest? Call <strong className="how-to-dutch">Dutch</strong> instead of drawing: everyone else gets one last turn.</li>
         </ol>
+        <p className="how-to-warning" role="note">
+          ⚠ Don't click your cards unless you want to stack! A click tries to stack that card, and a
+          wrong stack gives you a penalty card.
+        </p>
       </section>
     </details>
   );
