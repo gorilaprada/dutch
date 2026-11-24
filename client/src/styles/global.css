@@ -650,6 +650,48 @@ button.card-clickable:hover {
   font-weight: 400;
 }
 
+/* My turn to draw: the prompt glows pink in time with the piles. */
+.prompt-glow {
+  color: var(--magenta-500);
+  animation: prompt-pink 1.6s ease-in-out infinite;
+}
+
+@keyframes prompt-pink {
+  0%, 100% { text-shadow: 0 0 4px rgba(255, 46, 147, 0.3); }
+  50% { text-shadow: 0 0 14px rgba(255, 46, 147, 0.9); }
+}
+
+/* My turn to draw: the piles are only clickable then, and they take turns
+   glowing pink to show the two choices. */
+.felt [data-slot="deck"] .card-clickable,
+.felt [data-slot="discard"] .card-clickable {
+  outline: 2px solid var(--magenta-500);
+  outline-offset: 3px;
+  animation: pulse-pink 1.6s ease-in-out infinite;
+}
+
+.felt [data-slot="discard"] .card-clickable {
+  animation-delay: -0.8s; /* half a cycle: out of phase with the deck */
+}
+
+@keyframes pulse-pink {
+  0%, 100% { outline-color: rgba(255, 46, 147, 0.2); box-shadow: var(--card-lift); }
+  50% { outline-color: var(--magenta-500); box-shadow: var(--card-lift), var(--glow-magenta); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt-glow {
+    animation: none;
+    text-shadow: 0 0 10px rgba(255, 46, 147, 0.7);
+  }
+
+  .felt [data-slot="deck"] .card-clickable,
+  .felt [data-slot="discard"] .card-clickable {
+    animation: none;
+    box-shadow: var(--card-lift), var(--glow-magenta);
+  }
+}
+
 .memorize {
   display: flex;
   align-items: center;

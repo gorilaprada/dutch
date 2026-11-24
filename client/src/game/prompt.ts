@@ -2,7 +2,8 @@ import type { Pick } from "./clicks.ts";
 import type { RoomView } from "./protocol.ts";
 import { isMyTurn, isSpectator, nameOf } from "./selectors.ts";
 
-export type Prompt = { text: string; idle: boolean }; // idle = nothing for me to do
+// idle = nothing for me to do; glow = draw attention (my turn to draw)
+export type Prompt = { text: string; idle: boolean; glow?: boolean };
 
 // The line above my hand: what I can do right now, or who we wait on
 export function promptFor(roomView: RoomView, jackPick: Pick | null, stackMode: boolean, eliminated = false): Prompt {
@@ -36,7 +37,7 @@ export function promptFor(roomView: RoomView, jackPick: Pick | null, stackMode: 
       : "Jack power: pick the first of two cards to swap.");
   }
   if (stackMode) return act("Pick one of your cards to stack on the discard pile.");
-  if (myTurn && phase === "drawing") return act("Your turn: draw from the deck or the discard pile, or call Dutch.");
+  if (myTurn && phase === "drawing") return { text: "Your turn: draw from the deck or the discard pile, or call Dutch.", idle: false, glow: true };
   if (myTurn && phase === "deciding") {
     return act(fromDiscard
       ? "Click one of your cards to switch it with the card you took."

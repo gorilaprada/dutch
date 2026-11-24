@@ -164,7 +164,7 @@ export function Table({ roomView }: { roomView: RoomView }) {
 
         <div className="seat seat-self">
           {spectators ? <p className="spectators">{spectators}</p> : null}
-          <p className={`prompt${prompt.idle ? " prompt-idle" : ""}`}>{prompt.text}</p>
+          <p className={`prompt${prompt.idle ? " prompt-idle" : ""}${prompt.glow ? " prompt-glow" : ""}`}>{prompt.text}</p>
           {self === undefined ? (
             <p className="spectating">{eliminated ? "You're out: watching the rest of the game" : "Watching"}</p>
           ) : (
